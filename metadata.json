@@ -1,0 +1,8 @@
+{
+  "name": "Play Aura",
+  "description": "A cute, friendly pastel HTML5 gaming website with instant browser play, ZIP upload validation, AdSense slots, and Supabase admin library support.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

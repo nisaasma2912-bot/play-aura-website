@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Fredoka", ui-rounded, system-ui, sans-serif;
+  --font-sans: "Nunito", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  --color-cream: #FFFDF6;
+  --color-cream-soft: #FAF5E8;
+  --color-mint: #D8F3E5;
+  --color-mint-deep: #1D6B52;
+  --color-lavender: #EAE5FA;
+  --color-lavender-deep: #4B3D8F;
+  --color-sky: #DDF0FC;
+  --color-sky-deep: #1E5B8A;
+  --color-ink: #2B3445;
+  --color-ink-muted: #5A657A;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    background-color: #FFFDF6;
+    color: #2B3445;
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+  }
+
+  body {
+    background-color: #FFFDF6;
+    color: #2B3445;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4, .font-display {
+    font-family: var(--font-display);
+  }
+}
+
+.bubble-shadow {
+  box-shadow: 0 10px 28px -10px rgba(74, 96, 128, 0.12), 0 2px 8px -2px rgba(74, 96, 128, 0.06);
+}
+
+.bubble-shadow-hover {
+  box-shadow: 0 18px 36px -12px rgba(74, 96, 128, 0.18), 0 4px 12px -2px rgba(74, 96, 128, 0.08);
+}
+
+.bubble-button {
+  transition: transform 160ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 160ms cubic-bezier(0.16, 1, 0.3, 1), background-color 160ms ease;
+}
+
+.bubble-button:active {
+  transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
