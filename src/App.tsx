@@ -122,6 +122,18 @@ export default function App() {
     };
   }, [loadPublishedGames, navigateTo]);
 
+  useEffect(() => {
+    document.title =
+      activeView === 'admin'
+        ? 'Admin — Play Aura'
+        : 'Play Aura — Cozy Pastel HTML5 Games';
+
+    const robotsMeta = document.querySelector<HTMLMetaElement>('meta[name="robots"]');
+    if (robotsMeta) {
+      robotsMeta.content = activeView === 'admin' ? 'noindex, nofollow' : 'index, follow';
+    }
+  }, [activeView]);
+
   const filteredGames = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return publishedGames;
@@ -138,6 +150,10 @@ export default function App() {
           <img
             src="/assets/aistudio/40542a35-1e12-43b9-8f97-b48e5e80a59f_a6b16010.png"
             alt=""
+            width={1672}
+            height={941}
+            decoding="async"
+            fetchPriority="high"
             className="w-full h-full object-cover object-center select-none"
           />
         </div>
@@ -199,9 +215,9 @@ export default function App() {
                   <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-[#D8F3E5] via-[#DDF0FC] to-[#EAE5FA] text-[#1D6B52] flex items-center justify-center border border-[#BFEAD6]">
                     <Gamepad2 className="w-8 h-8" aria-hidden="true" />
                   </div>
-                  <h1 className="font-display text-2xl sm:text-3xl font-bold text-[#2B3445] text-balance">
+                  <h2 className="font-display text-2xl sm:text-3xl font-bold text-[#2B3445] text-balance">
                     No games yet! New adventures are coming soon.
-                  </h1>
+                  </h2>
                 </div>
               ) : filteredGames.length === 0 ? (
                 <div className="max-w-md mx-auto rounded-[32px] bg-white/95 backdrop-blur-sm border-2 border-[#EAE5FA] p-8 text-center bubble-shadow space-y-4 my-6">
