@@ -122,7 +122,7 @@ export default defineConfig(() => {
 
           // Fallback: if any required static file was placed in Public/, public/public/, or repo root,
           // copy its real contents into dist without creating placeholders.
-          const requiredStaticFiles = ['sitemap.xml', 'robots.txt', '_headers', '_redirects'];
+          const requiredStaticFiles = ['sitemap.xml', 'robots.txt', '_headers'];
           for (const filename of requiredStaticFiles) {
             const destPath = path.join(distDir, filename);
             if (fs.existsSync(destPath)) continue;
@@ -146,7 +146,6 @@ export default defineConfig(() => {
             'sitemap.xml',
             'robots.txt',
             '_headers',
-            '_redirects',
             'og-play-aura.jpg',
             'favicon.ico',
             'favicon-32x32.png',
