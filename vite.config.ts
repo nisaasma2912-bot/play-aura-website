@@ -45,14 +45,15 @@ function copyPublicFilesSafely(srcDir: string, destDir: string): string[] {
   }
 
   const walk = (currentSrc: string, relBase: string) => {
-    for (const entry of fs.readdirSync(currentSrc, { withFileTypes: true })) {
-      const relPath = relBase ? path.join(relBase, entry.name) : entry.name;
-      const srcPath = path.join(currentSrc, entry.name);
+    for (const entryName of fs.readdirSync(currentSrc)) {
+      const relPath = relBase ? path.join(relBase, entryName) : entryName;
+      const srcPath = path.join(currentSrc, entryName);
       const destPath = path.join(destDir, relPath);
+      const stat = fs.statSync(srcPath);
 
-      if (entry.isDirectory()) {
+      if (stat.isDirectory()) {
         walk(srcPath, relPath);
-      } else if (entry.isFile()) {
+      } else if (stat.isFile()) {
         // Never overwrite Vite's bundled root index.html
         if (relPath === 'index.html') {
           continue;
@@ -70,7 +71,11 @@ function copyPublicFilesSafely(srcDir: string, destDir: string): string[] {
 
 export default defineConfig(() => {
   const projectRoot = resolveProjectRoot();
-  const publicDir = path.resolve(projectRoot, 'public');
+  const publicDir = fs.existsSync(path.resolve(projectRoot, 'public'))
+    ? path.resolve(projectRoot, 'public')
+    : fs.existsSync(path.resolve(projectRoot, 'Public'))
+      ? path.resolve(projectRoot, 'Public')
+      : path.resolve(projectRoot, 'public');
   const distDir = path.resolve(projectRoot, 'dist');
 
   return {
@@ -115,6 +120,27 @@ export default defineConfig(() => {
 
           const copiedFiles = copyPublicFilesSafely(publicDir, distDir);
 
+          // Fallback: if any required static file was placed in Public/, public/public/, or repo root,
+          // copy its real contents into dist without creating placeholders.
+          const requiredStaticFiles = ['sitemap.xml', 'robots.txt', '_headers', '_redirects'];
+          for (const filename of requiredStaticFiles) {
+            const destPath = path.join(distDir, filename);
+            if (fs.existsSync(destPath)) continue;
+
+            const fallbackCandidates = [
+              path.join(projectRoot, 'Public', filename),
+              path.join(projectRoot, 'public', 'public', filename),
+              path.join(projectRoot, filename),
+            ];
+            for (const candidate of fallbackCandidates) {
+              if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
+                fs.copyFileSync(candidate, destPath);
+                copiedFiles.push(filename);
+                break;
+              }
+            }
+          }
+
           const requiredDistFiles = [
             'index.html',
             'sitemap.xml',
@@ -128,9 +154,15 @@ export default defineConfig(() => {
           );
 
           if (missing.length > 0) {
+            const rootEntries = fs.existsSync(projectRoot)
+              ? fs.readdirSync(projectRoot).join(', ')
+              : 'missing';
+            const publicEntries = fs.existsSync(publicDir)
+              ? fs.readdirSync(publicDir).join(', ')
+              : 'missing';
             throw new Error(
               `Build verification failed: missing required dist file(s): ${missing.join(', ')} ` +
-                `(projectRoot=${projectRoot}, publicDir=${publicDir}, copied=${copiedFiles.join(', ') || 'none'})`
+                `(projectRoot=${projectRoot} [${rootEntries}], publicDir=${publicDir} [${publicEntries}], copied=${copiedFiles.join(', ') || 'none'})`
             );
           }
 
