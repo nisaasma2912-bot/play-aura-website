@@ -147,6 +147,12 @@ export default defineConfig(() => {
             'robots.txt',
             '_headers',
             '_redirects',
+            'og-play-aura.jpg',
+            'favicon.ico',
+            'favicon-32x32.png',
+            'favicon-16x16.png',
+            'icon-192x192.png',
+            'apple-touch-icon.png',
           ];
 
           const missing = requiredDistFiles.filter(
