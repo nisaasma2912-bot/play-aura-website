@@ -9,6 +9,7 @@ interface GameThumbnailProps {
   fallbackBg?: string;
   compact?: boolean;
   imgClassName?: string;
+  loading?: 'eager' | 'lazy';
 }
 
 function parseSupabasePublicStorageUrl(
@@ -33,6 +34,7 @@ export function GameThumbnail({
   fallbackBg = 'from-[#D8F3E5] to-[#DDF0FC]',
   compact = false,
   imgClassName = 'w-full h-full object-cover',
+  loading = 'eager',
 }: GameThumbnailProps) {
   const normalizedSrc = resolveThumbnailUrl(src);
   const [activeSrc, setActiveSrc] = useState<string>(normalizedSrc);
@@ -175,6 +177,9 @@ export function GameThumbnail({
         ref={imgRef}
         src={activeSrc}
         alt={alt}
+        width={400}
+        height={300}
+        loading={loading}
         referrerPolicy="no-referrer"
         decoding="async"
         onLoad={() => setIsLoaded(true)}

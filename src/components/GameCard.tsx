@@ -50,15 +50,16 @@ export function GameCard({ game, index, onPlay }: GameCardProps) {
           alt={`${game.title} game thumbnail`}
           title={game.title}
           fallbackBg={theme.fallbackBg}
+          loading={index < 6 ? 'eager' : 'lazy'}
           imgClassName="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
         />
       </div>
 
       {/* Title + Play CTA */}
       <div className="flex flex-col flex-1 justify-between gap-3 px-1">
-        <h3 className="font-display text-xl font-bold text-[#2B3445] leading-snug line-clamp-1">
+        <h2 className="font-display text-xl font-bold text-[#2B3445] leading-snug line-clamp-1">
           {game.title}
-        </h3>
+        </h2>
 
         <button
           type="button"

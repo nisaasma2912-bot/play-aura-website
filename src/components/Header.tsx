@@ -28,11 +28,20 @@ export function Header({ activeView, onNavigate }: HeaderProps) {
           <img
             src="/assets/aistudio/d83468c5-4a06-4940-911e-11eb721a66fc_ddc43c92.png"
             alt="Play Aura logo"
+            width={1536}
+            height={1024}
+            decoding="async"
             className="h-10 sm:h-11 md:h-12 w-auto object-contain rounded-xl shrink-0"
           />
-          <span className="font-display text-xl sm:text-2xl font-bold tracking-tight text-[#2B3445]">
-            Play Aura
-          </span>
+          {activeView === 'home' ? (
+            <h1 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-[#2B3445]">
+              Play Aura
+            </h1>
+          ) : (
+            <span className="font-display text-xl sm:text-2xl font-bold tracking-tight text-[#2B3445]">
+              Play Aura
+            </span>
+          )}
         </button>
 
         {/* Zone 2: Clean Single-Line Navigation */}
