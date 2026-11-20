@@ -1,10 +1,19 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type {
   AdminUserSession,
+  BlockedSuggestionVisitorRecord,
   ExtractedGameFile,
   GameRecord,
   GameStatus,
+  GameSuggestionRecord,
+  SuggestionStatus,
 } from '../types/game';
+import {
+  getRemainingCooldownSeconds,
+  recordSuggestionSubmissionTime,
+  validateSuggestionInput,
+} from './suggestionValidation';
+import { getVisitorTokenHash } from './visitorToken';
 import { slugifyGameTitle } from './zipValidator';
 
 export const GAMES_BUCKET = 'games' as const;
@@ -492,5 +501,211 @@ export async function deleteGameAdmin(game: GameRecord): Promise<void> {
   const { error } = await supabase.from('games').delete().eq('id', game.id);
   if (error) {
     throw new Error(error.message);
+  }
+}
+
+interface DbSuggestionRow {
+  id: string;
+  message: string;
+  visitor_token_hash: string;
+  status: string;
+  created_at: string;
+}
+
+interface DbBlockedVisitorRow {
+  id: string;
+  visitor_token_hash: string;
+  reason?: string | null;
+  created_at: string;
+  blocked_by?: string | null;
+}
+
+function normalizeSuggestionStatus(raw: string): SuggestionStatus {
+  if (raw === 'reviewed' || raw === 'archived') return raw;
+  return 'new';
+}
+
+function mapSuggestionRow(row: DbSuggestionRow): GameSuggestionRecord {
+  return {
+    id: row.id,
+    message: row.message,
+    visitorTokenHash: row.visitor_token_hash,
+    status: normalizeSuggestionStatus(row.status),
+    createdAt: row.created_at,
+  };
+}
+
+function mapBlockedVisitorRow(row: DbBlockedVisitorRow): BlockedSuggestionVisitorRecord {
+  return {
+    id: row.id,
+    visitorTokenHash: row.visitor_token_hash,
+    reason: row.reason ?? '',
+    createdAt: row.created_at,
+    blockedBy: row.blocked_by ?? null,
+  };
+}
+
+export interface SubmitSuggestionResult {
+  ok: boolean;
+  code: string;
+  message: string;
+}
+
+export async function submitGameSuggestion(rawMessage: string): Promise<SubmitSuggestionResult> {
+  const validation = validateSuggestionInput(rawMessage);
+  if (!validation.valid) {
+    return {
+      ok: false,
+      code: 'validation_error',
+      message: validation.error || 'Please check your game suggestion and try again.',
+    };
+  }
+
+  const remainingCooldown = getRemainingCooldownSeconds();
+  if (remainingCooldown > 0) {
+    return {
+      ok: false,
+      code: 'rate_limited',
+      message: `Please wait ${remainingCooldown} seconds before sending another game suggestion.`,
+    };
+  }
+
+  if (!supabase) {
+    return {
+      ok: false,
+      code: 'not_configured',
+      message: 'Suggestions are currently unavailable while the game library service is offline.',
+    };
+  }
+
+  const visitorTokenHash = await getVisitorTokenHash();
+
+  const { data, error } = await supabase.rpc('submit_game_suggestion', {
+    p_message: validation.cleaned,
+    p_visitor_token_hash: visitorTokenHash,
+  });
+
+  if (error) {
+    console.error('[Play Aura] submit_game_suggestion RPC failed:', {
+      code: error.code,
+      message: error.message,
+      details: error.details,
+    });
+    const isMissingMigration =
+      error.code === 'PGRST202' ||
+      error.code === '42883' ||
+      /could not find the function/i.test(error.message || '');
+    return {
+      ok: false,
+      code: isMissingMigration ? 'migration_required' : 'server_error',
+      message: isMissingMigration
+        ? 'The suggestions database function is not installed yet on Supabase. Please run the suggestions SQL migration and try again.'
+        : 'We could not send your suggestion right now. Please try again shortly.',
+    };
+  }
+
+  const payload = (data || {}) as { ok?: boolean; code?: string; error?: string };
+  if (!payload.ok) {
+    return {
+      ok: false,
+      code: payload.code || 'rejected',
+      message: payload.error || 'Unable to submit your suggestion right now.',
+    };
+  }
+
+  recordSuggestionSubmissionTime();
+  return {
+    ok: true,
+    code: payload.code || 'created',
+    message: 'Thank you! Your game suggestion has been sent to Play Aura.',
+  };
+}
+
+export async function fetchAllSuggestionsAdmin(): Promise<GameSuggestionRecord[]> {
+  if (!supabase) throw new Error('Supabase is not connected.');
+  const { data, error } = await supabase
+    .from('game_suggestions')
+    .select('id, message, visitor_token_hash, status, created_at')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    throw new Error(error.message || 'Unable to load game suggestions.');
+  }
+  return ((data || []) as DbSuggestionRow[]).map(mapSuggestionRow);
+}
+
+export async function updateSuggestionStatusAdmin(
+  id: string,
+  status: SuggestionStatus
+): Promise<GameSuggestionRecord> {
+  if (!supabase) throw new Error('Supabase is not connected.');
+  const { data, error } = await supabase
+    .from('game_suggestions')
+    .update({ status })
+    .eq('id', id)
+    .select('id, message, visitor_token_hash, status, created_at')
+    .single();
+
+  if (error || !data) {
+    throw new Error(error?.message || 'Could not update suggestion status.');
+  }
+  return mapSuggestionRow(data as DbSuggestionRow);
+}
+
+export async function deleteSuggestionAdmin(id: string): Promise<void> {
+  if (!supabase) throw new Error('Supabase is not connected.');
+  const { error } = await supabase.from('game_suggestions').delete().eq('id', id);
+  if (error) {
+    throw new Error(error.message || 'Could not delete suggestion.');
+  }
+}
+
+export async function fetchBlockedSuggestionVisitorsAdmin(): Promise<BlockedSuggestionVisitorRecord[]> {
+  if (!supabase) throw new Error('Supabase is not connected.');
+  const { data, error } = await supabase
+    .from('blocked_suggestion_visitors')
+    .select('id, visitor_token_hash, reason, created_at, blocked_by')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    throw new Error(error.message || 'Unable to load blocked visitors.');
+  }
+  return ((data || []) as DbBlockedVisitorRow[]).map(mapBlockedVisitorRow);
+}
+
+export async function blockSuggestionVisitorAdmin(
+  visitorTokenHash: string,
+  blockedByUserId: string,
+  reason = ''
+): Promise<BlockedSuggestionVisitorRecord> {
+  if (!supabase) throw new Error('Supabase is not connected.');
+  const { data, error } = await supabase
+    .from('blocked_suggestion_visitors')
+    .upsert(
+      {
+        visitor_token_hash: visitorTokenHash,
+        reason: reason.trim(),
+        blocked_by: blockedByUserId,
+      },
+      { onConflict: 'visitor_token_hash' }
+    )
+    .select('id, visitor_token_hash, reason, created_at, blocked_by')
+    .single();
+
+  if (error || !data) {
+    throw new Error(error?.message || 'Could not block visitor.');
+  }
+  return mapBlockedVisitorRow(data as DbBlockedVisitorRow);
+}
+
+export async function unblockSuggestionVisitorAdmin(visitorTokenHash: string): Promise<void> {
+  if (!supabase) throw new Error('Supabase is not connected.');
+  const { error } = await supabase
+    .from('blocked_suggestion_visitors')
+    .delete()
+    .eq('visitor_token_hash', visitorTokenHash);
+
+  if (error) {
+    throw new Error(error.message || 'Could not unblock visitor.');
   }
 }
