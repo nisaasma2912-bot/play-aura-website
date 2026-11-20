@@ -119,6 +119,14 @@ to authenticated
 using (bucket_id in ('games', 'thumbnails.') and public.is_playaura_admin());
 ```
 
+### 2B. Create Game Suggestions & Visitor Moderation Tables
+
+Run the SQL file at `supabase/migrations/20261119_game_suggestions.sql` in your Supabase **SQL Editor** to create:
+- `public.game_suggestions`
+- `public.blocked_suggestion_visitors`
+- Admin-only Row Level Security policies using `public.is_playaura_admin()`
+- The validated `public.submit_game_suggestion(p_message text, p_visitor_token_hash text)` RPC function
+
 ---
 
 ## 3. Add Your First Admin User
