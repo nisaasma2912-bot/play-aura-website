@@ -49,3 +49,30 @@ export interface AdminUserSession {
   userId: string;
   email: string;
 }
+
+export type ActiveView =
+  | 'home'
+  | 'admin'
+  | 'privacy-policy'
+  | 'terms'
+  | 'contact'
+  | 'about'
+  | 'disclaimer';
+
+export type SuggestionStatus = 'new' | 'reviewed' | 'archived';
+
+export interface GameSuggestionRecord {
+  id: string;
+  message: string;
+  visitorTokenHash: string;
+  status: SuggestionStatus;
+  createdAt: string;
+}
+
+export interface BlockedSuggestionVisitorRecord {
+  id: string;
+  visitorTokenHash: string;
+  reason: string;
+  createdAt: string;
+  blockedBy: string | null;
+}
