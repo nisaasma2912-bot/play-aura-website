@@ -25,7 +25,7 @@ export function FloatingSocialButtons({
   return (
     <div
       aria-label="Community actions"
-      className="flex flex-col items-center gap-1 shrink-0"
+      className="flex flex-row items-center gap-2 shrink-0"
     >
       <button
         type="button"
