@@ -1,4 +1,5 @@
 import { Search, X } from 'lucide-react';
+import { playButtonClickSound } from '../lib/sound';
 
 interface SearchBarProps {
   query: string;
@@ -16,6 +17,7 @@ export function SearchBar({ query, onQueryChange }: SearchBarProps) {
         <input
           type="search"
           value={query}
+          onClick={() => playButtonClickSound()}
           onChange={(e) => onQueryChange(e.target.value)}
           placeholder="Search Play Aura games by name..."
           aria-label="Search games by name"
