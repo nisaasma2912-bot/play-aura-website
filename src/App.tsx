@@ -2,9 +2,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlertCircle, Gamepad2, Loader2, RefreshCw, SearchX } from 'lucide-react';
 import { AdSenseSlot } from './components/AdSenseSlot';
 import { AdminPortal } from './components/AdminPortal';
+import { Footer } from './components/Footer';
 import { GameCard } from './components/GameCard';
 import { GamePlayerOverlay } from './components/GamePlayerOverlay';
+import { GameSuggestionModal } from './components/GameSuggestionModal';
 import { Header, type ActiveView } from './components/Header';
+import { InfoPage } from './components/InfoPages';
 import { SearchBar } from './components/SearchBar';
 import {
   fetchPublishedSupabaseGames,
@@ -14,9 +17,83 @@ import {
 } from './lib/supabase';
 import type { AdminUserSession, GameRecord } from './types/game';
 
-function getViewFromPathname(pathname: string): ActiveView {
+const SITE_ORIGIN = 'https://play-aura-website.pages.dev';
+
+const ROUTE_PATHS: Record<ActiveView, string> = {
+  home: '/',
+  admin: '/admin',
+  'privacy-policy': '/privacy-policy',
+  terms: '/terms',
+  contact: '/contact',
+  about: '/about',
+  disclaimer: '/disclaimer',
+};
+
+const ROUTE_SEO: Record<ActiveView, { title: string; description: string }> = {
+  home: {
+    title: 'Play Aura — Cozy Pastel HTML5 Games',
+    description:
+      'Play Aura is a cheerful, child-friendly pastel HTML5 gaming playground. Click any game card to play instantly in your browser.',
+  },
+  admin: {
+    title: 'Admin — Play Aura',
+    description: 'Private administrator dashboard for managing Play Aura games and suggestions.',
+  },
+  'privacy-policy': {
+    title: 'Privacy Policy — Play Aura',
+    description:
+      'Read how Play Aura handles hosting logs, browser storage, anonymous suggestion tokens, and privacy questions.',
+  },
+  terms: {
+    title: 'Terms & Conditions — Play Aura',
+    description:
+      'Terms of use, third-party game ownership, suggestion guidelines, and moderation rules for Play Aura.',
+  },
+  contact: {
+    title: 'Contact Us — Play Aura',
+    description:
+      'Get in touch with Play Aura via email for general questions, copyright notices, privacy inquiries, or feedback.',
+  },
+  about: {
+    title: 'About Us — Play Aura',
+    description:
+      'Learn about Play Aura, an online browser gaming playground where visitors discover games and suggest new ideas.',
+  },
+  disclaimer: {
+    title: 'Disclaimer — Play Aura',
+    description:
+      'Third-party game intellectual property, availability, and platform maintenance disclaimer for Play Aura.',
+  },
+};
+
+export function getViewFromPathname(pathname: string): ActiveView {
   const normalized = pathname.replace(/\/+$/, '') || '/';
-  return normalized === '/admin' ? 'admin' : 'home';
+  switch (normalized) {
+    case '/admin':
+      return 'admin';
+    case '/privacy-policy':
+      return 'privacy-policy';
+    case '/terms':
+      return 'terms';
+    case '/contact':
+      return 'contact';
+    case '/about':
+      return 'about';
+    case '/disclaimer':
+      return 'disclaimer';
+    default:
+      return 'home';
+  }
+}
+
+function isInfoView(view: ActiveView): view is Exclude<ActiveView, 'home' | 'admin'> {
+  return (
+    view === 'privacy-policy' ||
+    view === 'terms' ||
+    view === 'contact' ||
+    view === 'about' ||
+    view === 'disclaimer'
+  );
 }
 
 export default function App() {
@@ -29,13 +106,14 @@ export default function App() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [activeGame, setActiveGame] = useState<GameRecord | null>(null);
+  const [suggestionModalOpen, setSuggestionModalOpen] = useState(false);
   const [adminSession, setAdminSession] = useState<AdminUserSession | null>(null);
   const [checkingAdminSession, setCheckingAdminSession] = useState<boolean>(isSupabaseConfigured);
 
   const navigateTo = useCallback((view: ActiveView, replace = false) => {
     setActiveView(view);
     if (typeof window === 'undefined') return;
-    const targetPath = view === 'admin' ? '/admin' : '/';
+    const targetPath = ROUTE_PATHS[view] || '/';
     const currentNormalized = window.location.pathname.replace(/\/+$/, '') || '/';
     if (currentNormalized !== targetPath) {
       if (replace) {
@@ -43,6 +121,7 @@ export default function App() {
       } else {
         window.history.pushState({}, '', targetPath);
       }
+      window.scrollTo({ top: 0, behavior: 'auto' });
     }
   }, []);
 
@@ -123,14 +202,22 @@ export default function App() {
   }, [loadPublishedGames, navigateTo]);
 
   useEffect(() => {
-    document.title =
-      activeView === 'admin'
-        ? 'Admin — Play Aura'
-        : 'Play Aura — Cozy Pastel HTML5 Games';
+    const seo = ROUTE_SEO[activeView];
+    document.title = seo.title;
+
+    const descMeta = document.querySelector<HTMLMetaElement>('meta[name="description"]');
+    if (descMeta) {
+      descMeta.content = seo.description;
+    }
 
     const robotsMeta = document.querySelector<HTMLMetaElement>('meta[name="robots"]');
     if (robotsMeta) {
       robotsMeta.content = activeView === 'admin' ? 'noindex, nofollow' : 'index, follow';
+    }
+
+    const canonicalLink = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    if (canonicalLink) {
+      canonicalLink.href = `${SITE_ORIGIN}${ROUTE_PATHS[activeView]}`;
     }
   }, [activeView]);
 
@@ -142,7 +229,7 @@ export default function App() {
 
   return (
     <div className="relative min-h-screen flex flex-col bg-[#FFFDF6] text-[#2B3445]">
-      {activeView === 'home' && (
+      {activeView !== 'admin' && (
         <div
           aria-hidden="true"
           className="fixed inset-0 z-0 pointer-events-none overflow-hidden bg-[#8DE4FF]"
@@ -162,6 +249,7 @@ export default function App() {
       <Header
         activeView={activeView}
         onNavigate={(view) => navigateTo(view)}
+        onOpenSuggestion={() => setSuggestionModalOpen(true)}
       />
 
       <main className="relative z-10 flex-1">
@@ -259,6 +347,10 @@ export default function App() {
           </>
         )}
 
+        {isInfoView(activeView) && (
+          <InfoPage view={activeView} onNavigate={(view) => navigateTo(view)} />
+        )}
+
         {activeView === 'admin' && (
           <AdminPortal
             session={adminSession}
@@ -272,23 +364,16 @@ export default function App() {
         )}
       </main>
 
-      {/* Quiet Footer */}
-      <footer className="relative z-10 border-t border-[#CBE7FA]/80 bg-white/90 backdrop-blur-md py-6 px-4 sm:px-6 mt-auto">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs sm:text-sm font-semibold text-[#5A657A]">
-          <p className="font-display text-base font-bold text-[#2B3445]">
-            Play Aura <span className="font-sans font-semibold text-xs text-[#5A657A]">· Gentle HTML5 Games</span>
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-6">
-            <button
-              type="button"
-              onClick={() => navigateTo('home')}
-              className="hover:text-[#1D6B52] transition-colors cursor-pointer"
-            >
-              Games
-            </button>
-          </div>
-        </div>
-      </footer>
+      {/* Complete Professional Footer on Homepage & All 5 Information Pages */}
+      {activeView !== 'admin' && (
+        <Footer activeView={activeView} onNavigate={(view) => navigateTo(view)} />
+      )}
+
+      {/* Game Suggestion Modal */}
+      <GameSuggestionModal
+        isOpen={suggestionModalOpen}
+        onClose={() => setSuggestionModalOpen(false)}
+      />
 
       {/* Instant Same-Page Game Player Overlay */}
       {activeGame && (
