@@ -9,6 +9,7 @@ import {
   Loader2,
   Lock,
   LogOut,
+  MessageSquarePlus,
   Pencil,
   Play,
   Plus,
@@ -17,6 +18,7 @@ import {
   UploadCloud,
   X,
 } from 'lucide-react';
+import { AdminSuggestionsPanel } from './AdminSuggestionsPanel';
 import {
   UnauthorizedAdminError,
   deleteGameAdmin,
@@ -72,6 +74,8 @@ export function AdminPortal({
   const [libraryError, setLibraryError] = useState<string | null>(null);
   const [libraryStatusFilter, setLibraryStatusFilter] = useState<'all' | GameStatus>('all');
   const [actionNotice, setActionNotice] = useState<string | null>(null);
+  const [adminSection, setAdminSection] = useState<'games' | 'suggestions'>('games');
+  const [newSuggestionsCount, setNewSuggestionsCount] = useState<number>(0);
 
   // Upload New Game section state
   const [uploadExpanded, setUploadExpanded] = useState(true);
@@ -485,14 +489,16 @@ export function AdminPortal({
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            onClick={() => setUploadExpanded((prev) => !prev)}
-            className="bubble-button inline-flex items-center gap-2 rounded-full bg-[#BFEAD6] hover:bg-[#A9E0C6] text-[#1D6B52] px-5 py-2.5 text-sm font-bold cursor-pointer"
-          >
-            <Plus className="w-4 h-4" aria-hidden="true" />
-            <span>{uploadExpanded ? 'Hide Upload Form' : 'Upload New Game'}</span>
-          </button>
+          {adminSection === 'games' && (
+            <button
+              type="button"
+              onClick={() => setUploadExpanded((prev) => !prev)}
+              className="bubble-button inline-flex items-center gap-2 rounded-full bg-[#BFEAD6] hover:bg-[#A9E0C6] text-[#1D6B52] px-5 py-2.5 text-sm font-bold cursor-pointer"
+            >
+              <Plus className="w-4 h-4" aria-hidden="true" />
+              <span>{uploadExpanded ? 'Hide Upload Form' : 'Upload New Game'}</span>
+            </button>
+          )}
 
           <button
             type="button"
@@ -505,7 +511,52 @@ export function AdminPortal({
         </div>
       </div>
 
-      {/* Real Library Counts */}
+      {/* Admin Portal Section Navigation: Games vs Suggestions */}
+      <div
+        role="tablist"
+        aria-label="Admin sections"
+        className="inline-flex flex-wrap items-center gap-2 p-1.5 rounded-full bg-white border-2 border-[#CBE7FA] bubble-shadow"
+      >
+        <button
+          type="button"
+          role="tab"
+          aria-selected={adminSection === 'games'}
+          onClick={() => setAdminSection('games')}
+          className={`inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-bold transition-colors cursor-pointer whitespace-nowrap ${
+            adminSection === 'games'
+              ? 'bg-[#D8F3E5] text-[#1D6B52]'
+              : 'text-[#5A657A] hover:text-[#2B3445]'
+          }`}
+        >
+          <span>Games Library</span>
+        </button>
+
+        <button
+          type="button"
+          role="tab"
+          aria-selected={adminSection === 'suggestions'}
+          onClick={() => setAdminSection('suggestions')}
+          className={`inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-bold transition-colors cursor-pointer whitespace-nowrap ${
+            adminSection === 'suggestions'
+              ? 'bg-[#DDF0FC] text-[#1E5B8A]'
+              : 'text-[#5A657A] hover:text-[#2B3445]'
+          }`}
+        >
+          <MessageSquarePlus className="w-4 h-4" aria-hidden="true" />
+          <span>
+            Suggestions{newSuggestionsCount > 0 ? ` (${newSuggestionsCount} new)` : ''}
+          </span>
+        </button>
+      </div>
+
+      {adminSection === 'suggestions' ? (
+        <AdminSuggestionsPanel
+          session={session}
+          onNewCountChange={setNewSuggestionsCount}
+        />
+      ) : (
+        <>
+          {/* Real Library Counts */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="rounded-[24px] bg-[#FAF5E8] border border-[#EAE3CE] p-5">
           <div className="text-xs font-bold text-[#5A657A]">Total Uploaded</div>
@@ -991,6 +1042,8 @@ export function AdminPortal({
           </div>
         )}
       </div>
+        </>
+      )}
 
       {/* Edit Game Modal */}
       {editingGame && (
