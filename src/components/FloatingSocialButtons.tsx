@@ -1,16 +1,22 @@
+
 import { playButtonClickSound } from '../lib/sound';
 
 export const SUGGESTION_CUSTOM_ICON_SRC =
   '/assets/aistudio/2f3821fe-f339-4ffd-84ea-fa1eedd5c8b0_54d97b59.png';
+
 export const YOUTUBE_CUSTOM_ICON_SRC =
   '/assets/aistudio/9616ce5f-0727-4be2-b2d5-3b0cb9219667_8faa4d56.png';
-export const YOUTUBE_CHANNEL_URL = 'https://youtube.com/@playauras?si=ilsh6c_XOeMAOd4A';
+
+export const YOUTUBE_CHANNEL_URL =
+  'https://youtube.com/@playauras?si=ilsh6c_XOeMAOd4A';
 
 interface FloatingSocialButtonsProps {
   onOpenSuggestion: () => void;
 }
 
-export function FloatingSocialButtons({ onOpenSuggestion }: FloatingSocialButtonsProps) {
+export function FloatingSocialButtons({
+  onOpenSuggestion,
+}: FloatingSocialButtonsProps) {
   const handleSuggestionClick = () => {
     playButtonClickSound();
     onOpenSuggestion();
@@ -19,15 +25,14 @@ export function FloatingSocialButtons({ onOpenSuggestion }: FloatingSocialButton
   return (
     <div
       aria-label="Community actions"
-      className="flex items-center gap-2 sm:gap-2.5 shrink-0"
+      className="flex flex-col items-center gap-1 shrink-0"
     >
-      {/* Button A: Custom Glossy Suggestion Icon (no text label) */}
       <button
         type="button"
         onClick={handleSuggestionClick}
         aria-label="Suggest a game"
         title="Suggest a game"
-        className="inline-flex items-center justify-center rounded-xl p-0.5 min-w-[48px] min-h-[48px] hover:scale-105 active:scale-95 transition-transform duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[#8AD8B5]"
+        className="inline-flex items-center justify-center rounded-xl p-0.5 min-w-[48px] min-h-[48px] hover:scale-105 active:scale-95 transition-transform duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8AD8B5]"
       >
         <img
           src={SUGGESTION_CUSTOM_ICON_SRC}
@@ -39,14 +44,13 @@ export function FloatingSocialButtons({ onOpenSuggestion }: FloatingSocialButton
         />
       </button>
 
-      {/* Button B: Custom Blue Glossy Play-button PNG -> YouTube Channel */}
       <a
         href={YOUTUBE_CHANNEL_URL}
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Visit Play Aura on YouTube"
         title="Visit Play Aura on YouTube"
-        className="inline-flex items-center justify-center rounded-xl p-0.5 min-w-[48px] min-h-[44px] hover:scale-105 active:scale-95 transition-transform duration-150 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[#8AC5F0]"
+        className="inline-flex items-center justify-center rounded-xl p-0.5 min-w-[48px] min-h-[44px] hover:scale-105 active:scale-95 transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8AC5F0]"
       >
         <img
           src={YOUTUBE_CUSTOM_ICON_SRC}
