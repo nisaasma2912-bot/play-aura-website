@@ -51,16 +51,13 @@ export function GameCard({ game, index, onPlay }: GameCardProps) {
         />
       </div>
 
-      {/* Title + Play CTA */}
-      <div className="flex flex-col flex-1 justify-between gap-1 sm:gap-3 px-0 sm:px-1">
-        <h2 className="font-display text-[10px] sm:text-xl font-bold text-[#2B3445] leading-tight sm:leading-snug line-clamp-2 sm:line-clamp-1">
+      {/* Mobile cards stay thumbnail-only; desktop keeps title and Play CTA */}
+      <div className="hidden sm:flex flex-col flex-1 justify-between gap-1 sm:gap-3 px-0 sm:px-1">
+        <h2 className="font-display text-xl font-bold text-[#2B3445] leading-snug line-clamp-1">
           {game.title}
         </h2>
-
-        <span
-          className={`bubble-button w-full rounded-full py-1 sm:py-2.5 px-1 sm:px-5 font-bold text-[9px] sm:text-sm inline-flex items-center justify-center gap-2 whitespace-nowrap ${theme.playBg}`}
-        >
-          <Play className="w-3 h-3 sm:w-4 sm:h-4 fill-current" aria-hidden="true" />
+        <span className={`bubble-button w-full rounded-full py-2.5 px-5 font-bold text-sm inline-flex items-center justify-center gap-2 whitespace-nowrap ${theme.playBg}`}>
+          <Play className="w-4 h-4 fill-current" aria-hidden="true" />
           <span className="truncate">Play</span>
         </span>
       </div>
