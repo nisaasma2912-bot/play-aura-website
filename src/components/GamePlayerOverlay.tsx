@@ -252,7 +252,7 @@ export function GamePlayerOverlay({
             className="bubble-button inline-flex items-center gap-1.5 rounded-full bg-[#FAF5E8] hover:bg-[#D8F3E5] text-[#2B3445] hover:text-[#1D6B52] px-2.5 landscape:px-4 sm:px-3.5 py-1.5 landscape:py-2 sm:py-2 text-xs landscape:text-sm sm:text-sm font-bold whitespace-nowrap shrink-0 cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" aria-hidden="true" />
-            <span className="hidden landscape:inline sm:inline">Back</span>
+            <span className="inline">Back</span>
           </button>
           <div className="min-w-0">
             <h2 className="hidden sm:block font-display text-base sm:text-xl font-bold text-[#2B3445] truncate">
@@ -269,7 +269,7 @@ export function GamePlayerOverlay({
             className="bubble-button inline-flex items-center gap-1.5 rounded-full bg-[#EAE5FA] hover:bg-[#DFD7F8] text-[#4B3D8F] px-2 landscape:px-4 sm:px-3.5 py-1.5 landscape:py-2 sm:py-2 text-xs landscape:text-sm sm:text-sm font-bold whitespace-nowrap shrink-0 cursor-pointer"
           >
             <RotateCcw className="w-4 h-4" aria-hidden="true" />
-            <span className="hidden landscape:inline sm:inline">Restart</span>
+            <span className="inline">Restart</span>
           </button>
 
           <button
@@ -283,7 +283,7 @@ export function GamePlayerOverlay({
             ) : (
               <Maximize2 className="w-4 h-4" aria-hidden="true" />
             )}
-            <span className="hidden landscape:inline sm:inline">{activeMax ? 'Exit Fullscreen' : 'Fullscreen'}</span>
+            <span className="inline">{activeMax ? 'Exit Fullscreen' : 'Fullscreen'}</span>
           </button>
 
           <button
@@ -299,7 +299,7 @@ export function GamePlayerOverlay({
 
       {/* Game viewport with compact recommendations on both sides */}
       <div className="w-full max-w-[1600px] mx-auto grid grid-cols-1 sm:grid-cols-[clamp(52px,6vw,88px)_minmax(0,1fr)_clamp(52px,6vw,88px)] gap-1.5 sm:gap-2.5 items-start">
-        <aside aria-label="Recommended games left" className="hidden sm:flex flex-col items-center gap-2 sm:gap-3 pt-1">
+        <aside aria-label="Recommended games left" className="mobile-landscape-hide hidden sm:flex flex-col items-center gap-2 sm:gap-3 pt-1">
           {recommendationGames.map((item, index) => (
             <button key={'left-' + item.id} type="button" onClick={() => onPlayRecommendation(item)} title={item.title} aria-label={'Play ' + item.title} className="w-full min-w-0 rounded-lg sm:rounded-xl border border-[#CBE7FA] bg-white p-1 sm:p-1.5 flex flex-col items-center gap-1 hover:bg-[#EAF7FF] cursor-pointer">
               <div className="w-full aspect-[4/3] overflow-hidden rounded-md bg-[#FAF5E8]">
@@ -337,7 +337,7 @@ export function GamePlayerOverlay({
             className={
               activeMax
                 ? 'w-full flex-1 min-h-0 bg-[#FFFDF6] relative'
-                : 'w-full max-w-[min(100%,calc((100dvh-150px)*9/16))] aspect-[9/16] sm:max-w-full sm:aspect-video bg-[#FFFDF6] relative mx-auto'
+                : 'game-viewport-frame w-full max-w-[min(100%,calc((100dvh-150px)*9/16))] aspect-[9/16] sm:max-w-full sm:aspect-video bg-[#FFFDF6] relative mx-auto'
             }
           >
             {loadingEntry ? (
