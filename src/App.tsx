@@ -47,7 +47,7 @@ const ROUTE_SEO: Record<ActiveView, { title: string; description: string }> = {
   home: {
     title: 'Free Online Games at Play Aura - Play Now!',
     description:
-      'Play free online games at Play Aura, the website for instant web games. Explore exclusive new game releases every week on Play Aura.',
+      'Play free browser games on Play Aura. Browse available games, launch them in your browser, and find game instructions and controls.',
   },
   admin: {
     title: 'Admin — Play Aura',
@@ -583,6 +583,37 @@ export default function App() {
                     ))}
                   </div>
                 )}
+
+                {/* Original, visitor-focused homepage information */}
+                <section aria-labelledby="play-aura-guide" className="mt-10 sm:mt-14 rounded-[28px] border-2 border-[#CBE7FA] bg-white/95 p-5 sm:p-8 bubble-shadow space-y-6">
+                  <div className="max-w-3xl space-y-2">
+                    <h2 id="play-aura-guide" className="font-display text-2xl sm:text-3xl font-bold text-[#2B3445]">
+                      Free Browser Games on Play Aura
+                    </h2>
+                    <p className="text-sm sm:text-base leading-relaxed text-[#5A657A]">
+                      Play Aura brings browser games together in one place. Browse the available titles, choose a game, and launch it in the on-page player without installing a separate game app. The collection may change as games are added, updated, or removed.
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="rounded-2xl bg-[#D8F3E5]/45 border border-[#BFEAD6] p-4 sm:p-5 space-y-2">
+                      <h3 className="font-display text-lg font-bold text-[#1D6B52]">How to Play</h3>
+                      <ol className="list-decimal pl-5 space-y-1.5 text-sm text-[#5A657A]">
+                        <li>Browse the game cards or search for a title.</li>
+                        <li>Select Play Now to open the game player.</li>
+                        <li>Use the game’s own controls; scroll below the player for instructions when they are available.</li>
+                      </ol>
+                    </div>
+                    <div className="rounded-2xl bg-[#DDF0FC]/55 border border-[#CBE7FA] p-4 sm:p-5 space-y-2">
+                      <h3 className="font-display text-lg font-bold text-[#1E5B8A]">Game Information</h3>
+                      <p className="text-sm leading-relaxed text-[#5A657A]">
+                        Game descriptions, objectives, tips, and keyboard, mouse, or touch controls are shown when supplied for a listing. Some games are created by third-party developers; their names and creative work remain the property of their respective owners.
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-xs leading-relaxed text-[#68758A]">
+                    Game performance and controls can vary by browser, device, and the individual game. If a game does not load, use the player’s Back button and contact Play Aura through the Contact Us page.
+                  </p>
+                </section>
 
                 {/* AdSense Area safely below the catalog (renders only when configured) */}
                 <div className="mt-12">
