@@ -47,7 +47,7 @@ export function FloatingSocialButtons({
           width={1080}
           height={1057}
           decoding="async"
-          className="block w-11 h-11 sm:w-[52px] sm:h-[52px] object-contain object-center shrink-0 select-none"
+          className="block w-10 h-10 sm:w-12 sm:h-12 object-contain object-center shrink-0 select-none"
         />
         {hasUnreadNotifications && (
           <span
@@ -88,7 +88,7 @@ export function FloatingSocialButtons({
           width={1536}
           height={1024}
           decoding="async"
-          className="block w-11 h-9 sm:w-[54px] sm:h-10 object-contain object-center shrink-0 select-none"
+          className="block w-10 h-10 sm:w-12 sm:h-12 object-contain object-center shrink-0 select-none"
         />
       </a>
     </div>
