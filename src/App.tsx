@@ -81,7 +81,7 @@ const ROUTE_SEO: Record<ActiveView, { title: string; description: string }> = {
 };
 
 function getGameSlugFromPathname(pathname: string): string | null {
-  const match = pathname.match(/^\\/games\\/([^/]+)\\/?$/i);
+  const match = pathname.match(/^\/games\/([^/]+)\/?$/i);
   return match ? decodeURIComponent(match[1]) : null;
 }
 
