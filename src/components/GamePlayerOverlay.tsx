@@ -382,7 +382,7 @@ export function GamePlayerOverlay({
       {/* Separate Scrollable Game Information Section (only renders non-empty admin-provided sections) */}
       {hasAnyInfo && (
         <div className="mt-3 sm:mt-8 w-full sm:max-w-[min(100%,calc(82dvh*16/9))] mx-auto">
-          <div className="rounded-2xl sm:rounded-[32px] bg-white/96 border-2 border-[#CBE7FA] p-3 sm:p-8 bubble-shadow space-y-6">
+          <div className="rounded-2xl sm:rounded-[32px] bg-transparent border-0 p-3 sm:p-8 space-y-6">
             <div className="border-b border-[#EAE3CE] pb-4">
               <h3 className="font-display text-2xl sm:text-3xl font-bold text-[#2B3445] break-words">
                 About {game.title}
