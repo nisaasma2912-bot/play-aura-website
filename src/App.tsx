@@ -80,6 +80,11 @@ const ROUTE_SEO: Record<ActiveView, { title: string; description: string }> = {
   },
 };
 
+function getGameSlugFromPathname(pathname: string): string | null {
+  const match = pathname.match(/^\\/games\\/([^/]+)\\/?$/i);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
 export function getViewFromPathname(pathname: string): ActiveView {
   const normalized = pathname.replace(/\/+$/, '') || '/';
   switch (normalized) {
@@ -285,6 +290,12 @@ export default function App() {
     }
     setActiveGame(game);
     if (typeof window !== 'undefined') {
+      if (!game.id.startsWith('local-preview-') && game.slug) {
+        const gamePath = `/games/${encodeURIComponent(game.slug)}`;
+        if (window.location.pathname !== gamePath) {
+          window.history.pushState({ playAuraGame: game.slug }, '', gamePath);
+        }
+      }
       window.scrollTo({ top: 0, behavior: 'auto' });
     }
   }, []);
@@ -296,6 +307,9 @@ export default function App() {
       trackGameClose(closingGame);
     }
     setActiveGame(null);
+    if (typeof window !== 'undefined' && getGameSlugFromPathname(window.location.pathname)) {
+      window.history.replaceState({}, '', '/');
+    }
   }, []);
 
   const navigateTo = useCallback(
@@ -321,14 +335,36 @@ export default function App() {
 
   useEffect(() => {
     const handlePopState = () => {
+      const gameSlug = getGameSlugFromPathname(window.location.pathname);
+      if (gameSlug) {
+        const matchingGame = publishedGames.find((game) => game.slug === gameSlug);
+        if (matchingGame) {
+          handleOpenGame(matchingGame);
+          return;
+        }
+      }
       if (activeGameSessionRef.current) {
-        handleCloseGame();
+        const closingGame = activeGameSessionRef.current;
+        activeGameSessionRef.current = null;
+        if (!closingGame.id.startsWith('local-preview-')) trackGameClose(closingGame);
+        setActiveGame(null);
       }
       setActiveView(getViewFromPathname(window.location.pathname));
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [handleCloseGame]);
+  }, [handleOpenGame, publishedGames]);
+
+  useEffect(() => {
+    const gameSlug = getGameSlugFromPathname(window.location.pathname);
+    if (!gameSlug || loadingGames || !publishedGames.length || activeGame?.slug === gameSlug) return;
+    const matchingGame = publishedGames.find((game) => game.slug === gameSlug);
+    if (matchingGame) {
+      activeGameSessionRef.current = matchingGame;
+      setActiveGame(matchingGame);
+      if (!matchingGame.id.startsWith('local-preview-')) trackGameOpen(matchingGame);
+    }
+  }, [publishedGames, loadingGames, activeGame]);
 
   const loadPublishedGames = useCallback(async () => {
     if (!isSupabaseConfigured) {
@@ -399,8 +435,19 @@ export default function App() {
   }, [loadPublishedGames, navigateTo]);
 
   useEffect(() => {
-    const seo = ROUTE_SEO[activeView];
-    const canonicalUrl = `${SITE_ORIGIN}${ROUTE_PATHS[activeView]}`;
+    const gameSeo = activeGame
+      ? {
+          title: `${activeGame.title} — Play Free Online | Play Aura`,
+          description: activeGame.description?.trim()
+            ? activeGame.description.trim().slice(0, 155)
+            : `Play ${activeGame.title} online for free on Play Aura. View game instructions and controls, then start playing in your browser.`,
+        }
+      : null;
+    const seo = gameSeo || ROUTE_SEO[activeView];
+    const canonicalPath = activeGame?.slug
+      ? `/games/${encodeURIComponent(activeGame.slug)}`
+      : ROUTE_PATHS[activeView];
+    const canonicalUrl = `${SITE_ORIGIN}${canonicalPath}`;
     document.title = seo.title;
 
     const descMeta = document.querySelector<HTMLMetaElement>('meta[name="description"]');
@@ -447,7 +494,7 @@ export default function App() {
     if (twitterUrl) {
       twitterUrl.content = canonicalUrl;
     }
-  }, [activeView]);
+  }, [activeView, activeGame]);
 
   const filteredGames = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
