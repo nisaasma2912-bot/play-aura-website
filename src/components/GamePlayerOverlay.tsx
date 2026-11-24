@@ -241,10 +241,10 @@ export function GamePlayerOverlay({
   return (
     <section
       aria-label={`${game.title} game player`}
-      className="w-full max-w-[1440px] mx-auto px-1 sm:px-4 lg:px-6 pt-2 sm:pt-5 pb-8 sm:pb-10"
+      className="game-player-section w-full max-w-[1440px] mx-auto px-1 sm:px-4 lg:px-6 pt-2 sm:pt-5 pb-8 sm:pb-10"
     >
       {/* Player Control Bar */}
-      <div className="w-full sm:max-w-[min(100%,calc(82dvh*16/9))] mx-auto flex flex-nowrap items-center justify-between gap-1 landscape:gap-2 sm:gap-4 mb-2 sm:mb-4 bg-white/95 border-2 border-[#CBE7FA] rounded-2xl sm:rounded-full px-1.5 landscape:px-3 sm:px-5 py-1.5 sm:py-2 bubble-shadow">
+      <div className="game-player-toolbar w-full sm:max-w-[min(100%,calc(82dvh*16/9))] mx-auto flex flex-nowrap items-center justify-between gap-1 landscape:gap-2 sm:gap-4 mb-2 sm:mb-4 bg-white/95 border-2 border-[#CBE7FA] rounded-2xl sm:rounded-full px-1.5 landscape:px-3 sm:px-5 py-1.5 sm:py-2 bubble-shadow">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <button
             type="button"
@@ -314,10 +314,10 @@ export function GamePlayerOverlay({
           ref={stageRef}
           className={
             isExpandedFallback
-              ? 'fixed inset-1 sm:inset-2 z-50 rounded-[20px] sm:rounded-[24px] bg-[#FFFDF6] border-3 sm:border-4 border-[#BFEAD6] overflow-hidden flex flex-col bubble-shadow'
+              ? 'game-player-stage fixed inset-1 sm:inset-2 z-50 rounded-[20px] sm:rounded-[24px] bg-[#FFFDF6] border-3 sm:border-4 border-[#BFEAD6] overflow-hidden flex flex-col bubble-shadow'
               : isFullscreen
-                ? 'w-screen h-screen bg-[#FFFDF6] overflow-hidden flex flex-col'
-                : 'w-full max-w-full rounded-[16px] sm:rounded-[24px] bg-[#FFFDF6] border-2 sm:border-3 border-[#CBE7FA] overflow-hidden bubble-shadow flex flex-col'
+                ? 'game-player-stage w-screen h-screen bg-[#FFFDF6] overflow-hidden flex flex-col'
+                : 'game-player-stage w-full max-w-full rounded-[16px] sm:rounded-[24px] bg-[#FFFDF6] border-2 sm:border-3 border-[#CBE7FA] overflow-hidden bubble-shadow flex flex-col'
           }
         >
           {activeMax && (
@@ -337,7 +337,7 @@ export function GamePlayerOverlay({
             className={
               activeMax
                 ? 'w-full flex-1 min-h-0 bg-[#FFFDF6] relative'
-                : 'game-viewport-frame w-full max-w-[min(100%,calc((100dvh-150px)*9/16))] aspect-[9/16] sm:max-w-full sm:aspect-video bg-[#FFFDF6] relative mx-auto'
+                : 'game-player-viewport game-viewport-frame w-full max-w-[min(100%,calc((100dvh-150px)*9/16))] aspect-[9/16] sm:max-w-full sm:aspect-video bg-[#FFFDF6] relative mx-auto'
             }
           >
             {loadingEntry ? (
@@ -381,7 +381,7 @@ export function GamePlayerOverlay({
 
       {/* Separate Scrollable Game Information Section (only renders non-empty admin-provided sections) */}
       {hasAnyInfo && (
-        <div className="mt-3 sm:mt-8 w-full sm:max-w-[min(100%,calc(82dvh*16/9))] mx-auto">
+        <div className="game-player-information mt-3 sm:mt-8 w-full sm:max-w-[min(100%,calc(82dvh*16/9))] mx-auto">
           <div className="rounded-2xl sm:rounded-[32px] bg-transparent border-0 p-3 sm:p-8 space-y-6">
             <div className="border-b border-[#EAE3CE] pb-4">
               <h3 className="font-display text-2xl sm:text-3xl font-bold text-[#2B3445] break-words">
