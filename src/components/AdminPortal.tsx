@@ -23,6 +23,7 @@ import {
   UnauthorizedAdminError,
   deleteGameAdmin,
   fetchAllGamesForAdmin,
+  fetchAllSuggestionsWithRepliesAdmin,
   isSupabaseConfigured,
   signInAdmin,
   signOutAdmin,
@@ -81,6 +82,12 @@ export function AdminPortal({
   const [uploadExpanded, setUploadExpanded] = useState(true);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [howToPlay, setHowToPlay] = useState('');
+  const [objective, setObjective] = useState('');
+  const [keyboardControls, setKeyboardControls] = useState('');
+  const [mouseControls, setMouseControls] = useState('');
+  const [touchControls, setTouchControls] = useState('');
+  const [tips, setTips] = useState('');
   const [initialStatus, setInitialStatus] = useState<GameStatus>('draft');
   const [thumbFile, setThumbFile] = useState<File | null>(null);
   const [thumbPreviewUrl, setThumbPreviewUrl] = useState<string>('');
@@ -99,6 +106,12 @@ export function AdminPortal({
   const [editingGame, setEditingGame] = useState<GameRecord | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editDesc, setEditDesc] = useState('');
+  const [editHowToPlay, setEditHowToPlay] = useState('');
+  const [editObjective, setEditObjective] = useState('');
+  const [editKeyboardControls, setEditKeyboardControls] = useState('');
+  const [editMouseControls, setEditMouseControls] = useState('');
+  const [editTouchControls, setEditTouchControls] = useState('');
+  const [editTips, setEditTips] = useState('');
   const [editThumbUrl, setEditThumbUrl] = useState('');
   const [editThumbFile, setEditThumbFile] = useState<File | null>(null);
   const [editThumbPreviewUrl, setEditThumbPreviewUrl] = useState<string>('');
@@ -127,8 +140,18 @@ export function AdminPortal({
   useEffect(() => {
     if (session) {
       void loadAdminLibrary();
+      void fetchAllSuggestionsWithRepliesAdmin()
+        .then((res) => {
+          setNewSuggestionsCount(
+            res.suggestions.filter((s) => s.status === 'new' || !s.adminReadAt).length
+          );
+        })
+        .catch(() => {
+          // Non-blocking badge preload
+        });
     } else {
       setGames([]);
+      setNewSuggestionsCount(0);
     }
   }, [session]);
 
@@ -213,7 +236,13 @@ export function AdminPortal({
       id: `local-preview-${Date.now()}`,
       title: title.trim() || zipFile?.name.replace(/\.zip$/i, '') || 'ZIP Preview',
       slug: 'local-preview',
-      description: description.trim() || 'Local pre-publish preview from your selected ZIP archive.',
+      description: description.trim(),
+      howToPlay: howToPlay.trim(),
+      objective: objective.trim(),
+      keyboardControls: keyboardControls.trim(),
+      mouseControls: mouseControls.trim(),
+      touchControls: touchControls.trim(),
+      tips: tips.trim(),
       thumbnailUrl: thumbPreviewUrl || thumbUrlInput.trim(),
       gameEntryUrl: '',
       gameSrcDoc: html,
@@ -227,6 +256,12 @@ export function AdminPortal({
     localPreviewRevokeRef.current = null;
     setTitle('');
     setDescription('');
+    setHowToPlay('');
+    setObjective('');
+    setKeyboardControls('');
+    setMouseControls('');
+    setTouchControls('');
+    setTips('');
     setInitialStatus('draft');
     setThumbFile(null);
     setThumbUrlInput('');
@@ -252,21 +287,32 @@ export function AdminPortal({
     setUploading(true);
     setUploadError(null);
     setActionNotice(null);
+    let fallbackWarning: string | null = null;
     try {
       const created = await uploadAndCreateGame({
         title,
         description,
+        howToPlay,
+        objective,
+        keyboardControls,
+        mouseControls,
+        touchControls,
+        tips,
         status: initialStatus,
         entryPath: zipValidation.entryPath,
         extractedFiles: zipValidation.files,
         thumbnailFile: thumbFile,
         thumbnailUrlFallback: thumbUrlInput,
         onProgress: (label, percent) => setUploadProgress({ label, percent }),
+        onSchemaFallbackWarning: (msg) => {
+          fallbackWarning = msg;
+        },
       });
       setGames((prev) => [created, ...prev]);
       onLibraryUpdated();
       setActionNotice(
-        `"${created.title}" uploaded as ${created.status === 'published' ? 'Published' : created.status === 'draft' ? 'Draft' : 'Unpublished'}.`
+        fallbackWarning ||
+          `"${created.title}" uploaded as ${created.status === 'published' ? 'Published' : created.status === 'draft' ? 'Draft' : 'Unpublished'}.`
       );
       resetUploadForm();
     } catch (err) {
@@ -280,6 +326,12 @@ export function AdminPortal({
     setEditingGame(g);
     setEditTitle(g.title);
     setEditDesc(g.description);
+    setEditHowToPlay(g.howToPlay || '');
+    setEditObjective(g.objective || '');
+    setEditKeyboardControls(g.keyboardControls || '');
+    setEditMouseControls(g.mouseControls || '');
+    setEditTouchControls(g.touchControls || '');
+    setEditTips(g.tips || '');
     setEditThumbUrl(g.thumbnailUrl);
     setEditThumbFile(null);
     setEditStatus(g.status);
@@ -295,17 +347,27 @@ export function AdminPortal({
     }
     setSavingEdit(true);
     setEditError(null);
+    let fallbackWarning: string | null = null;
     try {
       const updated = await updateGameAdmin(editingGame, {
         title: editTitle,
         description: editDesc,
+        howToPlay: editHowToPlay,
+        objective: editObjective,
+        keyboardControls: editKeyboardControls,
+        mouseControls: editMouseControls,
+        touchControls: editTouchControls,
+        tips: editTips,
         thumbnailUrl: editThumbUrl,
         thumbnailFile: editThumbFile,
         status: editStatus,
+        onSchemaFallbackWarning: (msg) => {
+          fallbackWarning = msg;
+        },
       });
       setGames((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
       onLibraryUpdated();
-      setActionNotice(`Saved changes to "${updated.title}".`);
+      setActionNotice(fallbackWarning || `Saved changes to "${updated.title}".`);
       setEditingGame(null);
     } catch (err) {
       setEditError(err instanceof Error ? err.message : 'Could not save changes.');
@@ -656,11 +718,11 @@ export function AdminPortal({
                   </label>
                   <textarea
                     id="up-desc"
-                    rows={3}
+                    rows={5}
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Short, friendly instructions or story for players..."
-                    className="w-full rounded-2xl bg-[#FFFDF6] border-2 border-[#CBE7FA] px-4 py-2.5 text-sm font-semibold focus:outline-none focus:border-[#8AD8B5]"
+                    placeholder="Write a clear game overview for players..."
+                    className="w-full rounded-2xl bg-[#FFFDF6] border-2 border-[#CBE7FA] px-4 py-2.5 text-sm font-semibold focus:outline-none focus:border-[#8AD8B5] resize-y"
                   />
                 </div>
               </div>
@@ -805,6 +867,93 @@ export function AdminPortal({
                 </div>
               </div>
             </div>
+
+            {/* Optional Structured Instructions, Objective, Controls & Tips */}
+            <details className="rounded-2xl bg-[#FAF5E8]/80 border border-[#EAE3CE] p-4">
+              <summary className="text-sm font-bold text-[#2B3445] cursor-pointer select-none">
+                Optional Game Instructions, Objective &amp; Controls
+              </summary>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+                <div>
+                  <label htmlFor="up-howto" className="block text-xs font-bold text-[#2B3445] mb-1">
+                    How to Play
+                  </label>
+                  <textarea
+                    id="up-howto"
+                    rows={3}
+                    value={howToPlay}
+                    onChange={(e) => setHowToPlay(e.target.value)}
+                    placeholder="Optional steps for playing this game..."
+                    className="w-full rounded-2xl bg-[#FFFDF6] border border-[#CBE7FA] px-3.5 py-2 text-xs sm:text-sm font-semibold focus:outline-none focus:border-[#8AD8B5] resize-y"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="up-objective" className="block text-xs font-bold text-[#2B3445] mb-1">
+                    Game Objective
+                  </label>
+                  <textarea
+                    id="up-objective"
+                    rows={3}
+                    value={objective}
+                    onChange={(e) => setObjective(e.target.value)}
+                    placeholder="Optional goal or win condition..."
+                    className="w-full rounded-2xl bg-[#FFFDF6] border border-[#CBE7FA] px-3.5 py-2 text-xs sm:text-sm font-semibold focus:outline-none focus:border-[#8AD8B5] resize-y"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="up-kb" className="block text-xs font-bold text-[#2B3445] mb-1">
+                    Keyboard Controls
+                  </label>
+                  <textarea
+                    id="up-kb"
+                    rows={2}
+                    value={keyboardControls}
+                    onChange={(e) => setKeyboardControls(e.target.value)}
+                    placeholder="Optional keyboard controls..."
+                    className="w-full rounded-2xl bg-[#FFFDF6] border border-[#CBE7FA] px-3.5 py-2 text-xs sm:text-sm font-semibold focus:outline-none focus:border-[#8AD8B5] resize-y"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="up-mouse" className="block text-xs font-bold text-[#2B3445] mb-1">
+                    Mouse Controls
+                  </label>
+                  <textarea
+                    id="up-mouse"
+                    rows={2}
+                    value={mouseControls}
+                    onChange={(e) => setMouseControls(e.target.value)}
+                    placeholder="Optional mouse controls..."
+                    className="w-full rounded-2xl bg-[#FFFDF6] border border-[#CBE7FA] px-3.5 py-2 text-xs sm:text-sm font-semibold focus:outline-none focus:border-[#8AD8B5] resize-y"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="up-touch" className="block text-xs font-bold text-[#2B3445] mb-1">
+                    Mobile Touch Controls
+                  </label>
+                  <textarea
+                    id="up-touch"
+                    rows={2}
+                    value={touchControls}
+                    onChange={(e) => setTouchControls(e.target.value)}
+                    placeholder="Optional mobile touch controls..."
+                    className="w-full rounded-2xl bg-[#FFFDF6] border border-[#CBE7FA] px-3.5 py-2 text-xs sm:text-sm font-semibold focus:outline-none focus:border-[#8AD8B5] resize-y"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="up-tips" className="block text-xs font-bold text-[#2B3445] mb-1">
+                    Useful Tips
+                  </label>
+                  <textarea
+                    id="up-tips"
+                    rows={2}
+                    value={tips}
+                    onChange={(e) => setTips(e.target.value)}
+                    placeholder="Optional helpful tips..."
+                    className="w-full rounded-2xl bg-[#FFFDF6] border border-[#CBE7FA] px-3.5 py-2 text-xs sm:text-sm font-semibold focus:outline-none focus:border-[#8AD8B5] resize-y"
+                  />
+                </div>
+              </div>
+            </details>
 
             {uploadError && (
               <div
@@ -1051,9 +1200,9 @@ export function AdminPortal({
           role="dialog"
           aria-modal="true"
           aria-label="Edit Game"
-          className="fixed inset-0 z-50 bg-[#EDF6FC]/90 backdrop-blur-sm overflow-y-auto p-4 flex items-center justify-center"
+          className="fixed inset-0 z-50 bg-[#EDF6FC]/90 backdrop-blur-sm overflow-y-auto p-4 flex items-start sm:items-center justify-center"
         >
-          <div className="w-full max-w-lg rounded-[32px] bg-white border-2 border-[#EAE5FA] p-6 sm:p-8 bubble-shadow my-6">
+          <div className="w-full max-w-2xl rounded-[32px] bg-white border-2 border-[#EAE5FA] p-6 sm:p-8 bubble-shadow my-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-display text-2xl font-bold text-[#2B3445]">Edit Game</h2>
               <button
@@ -1134,11 +1283,98 @@ export function AdminPortal({
                 </label>
                 <textarea
                   id="ed-desc"
-                  rows={3}
+                  rows={5}
                   value={editDesc}
                   onChange={(e) => setEditDesc(e.target.value)}
-                  className="w-full rounded-2xl bg-[#FFFDF6] border-2 border-[#CBE7FA] px-4 py-2.5 text-sm font-semibold"
+                  placeholder="Write a detailed game overview for players..."
+                  className="w-full rounded-2xl bg-[#FFFDF6] border-2 border-[#CBE7FA] px-4 py-2.5 text-sm font-semibold focus:outline-none focus:border-[#8AD8B5] resize-y"
                 />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
+                <div>
+                  <label htmlFor="ed-howto" className="block text-xs font-bold text-[#2B3445] mb-1">
+                    How to Play
+                  </label>
+                  <textarea
+                    id="ed-howto"
+                    rows={3}
+                    value={editHowToPlay}
+                    onChange={(e) => setEditHowToPlay(e.target.value)}
+                    placeholder="Optional steps for playing..."
+                    className="w-full rounded-2xl bg-[#FFFDF6] border-2 border-[#CBE7FA] px-3.5 py-2 text-xs sm:text-sm font-semibold focus:outline-none focus:border-[#8AD8B5] resize-y"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="ed-objective" className="block text-xs font-bold text-[#2B3445] mb-1">
+                    Game Objective
+                  </label>
+                  <textarea
+                    id="ed-objective"
+                    rows={3}
+                    value={editObjective}
+                    onChange={(e) => setEditObjective(e.target.value)}
+                    placeholder="Optional objective or goal..."
+                    className="w-full rounded-2xl bg-[#FFFDF6] border-2 border-[#CBE7FA] px-3.5 py-2 text-xs sm:text-sm font-semibold focus:outline-none focus:border-[#8AD8B5] resize-y"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="ed-kb" className="block text-xs font-bold text-[#2B3445] mb-1">
+                    Keyboard Controls
+                  </label>
+                  <textarea
+                    id="ed-kb"
+                    rows={2}
+                    value={editKeyboardControls}
+                    onChange={(e) => setEditKeyboardControls(e.target.value)}
+                    placeholder="Optional keyboard controls..."
+                    className="w-full rounded-2xl bg-[#FFFDF6] border-2 border-[#CBE7FA] px-3.5 py-2 text-xs sm:text-sm font-semibold focus:outline-none focus:border-[#8AD8B5] resize-y"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="ed-mouse" className="block text-xs font-bold text-[#2B3445] mb-1">
+                    Mouse Controls
+                  </label>
+                  <textarea
+                    id="ed-mouse"
+                    rows={2}
+                    value={editMouseControls}
+                    onChange={(e) => setEditMouseControls(e.target.value)}
+                    placeholder="Optional mouse controls..."
+                    className="w-full rounded-2xl bg-[#FFFDF6] border-2 border-[#CBE7FA] px-3.5 py-2 text-xs sm:text-sm font-semibold focus:outline-none focus:border-[#8AD8B5] resize-y"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="ed-touch" className="block text-xs font-bold text-[#2B3445] mb-1">
+                    Mobile Touch Controls
+                  </label>
+                  <textarea
+                    id="ed-touch"
+                    rows={2}
+                    value={editTouchControls}
+                    onChange={(e) => setEditTouchControls(e.target.value)}
+                    placeholder="Optional mobile touch controls..."
+                    className="w-full rounded-2xl bg-[#FFFDF6] border-2 border-[#CBE7FA] px-3.5 py-2 text-xs sm:text-sm font-semibold focus:outline-none focus:border-[#8AD8B5] resize-y"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="ed-tips" className="block text-xs font-bold text-[#2B3445] mb-1">
+                    Useful Tips
+                  </label>
+                  <textarea
+                    id="ed-tips"
+                    rows={2}
+                    value={editTips}
+                    onChange={(e) => setEditTips(e.target.value)}
+                    placeholder="Optional helpful tips..."
+                    className="w-full rounded-2xl bg-[#FFFDF6] border-2 border-[#CBE7FA] px-3.5 py-2 text-xs sm:text-sm font-semibold focus:outline-none focus:border-[#8AD8B5] resize-y"
+                  />
+                </div>
               </div>
 
               {editError && (

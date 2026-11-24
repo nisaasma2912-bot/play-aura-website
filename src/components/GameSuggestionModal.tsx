@@ -11,9 +11,14 @@ import { SUGGESTION_CUSTOM_ICON_SRC } from './FloatingSocialButtons';
 interface GameSuggestionModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSuggestionSubmitted?: () => void;
 }
 
-export function GameSuggestionModal({ isOpen, onClose }: GameSuggestionModalProps) {
+export function GameSuggestionModal({
+  isOpen,
+  onClose,
+  onSuggestionSubmitted,
+}: GameSuggestionModalProps) {
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -75,6 +80,7 @@ export function GameSuggestionModal({ isOpen, onClose }: GameSuggestionModalProp
       if (result.ok) {
         setSuccessMessage(result.message);
         setMessage('');
+        onSuggestionSubmitted?.();
       } else {
         setErrorMessage(result.message);
       }

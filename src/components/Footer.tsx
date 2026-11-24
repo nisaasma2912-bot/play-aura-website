@@ -6,6 +6,7 @@ const LOGO_SRC = '/assets/aistudio/5bc4cd61-25ef-4236-a8bc-50f736f5221a_ba0fcba2
 interface FooterProps {
   activeView: ActiveView;
   onNavigate: (view: ActiveView) => void;
+  onOpenCookieSettings?: () => void;
 }
 
 const FOOTER_LINKS: Array<{ view: ActiveView; href: string; label: string }> = [
@@ -16,7 +17,7 @@ const FOOTER_LINKS: Array<{ view: ActiveView; href: string; label: string }> = [
   { view: 'contact', href: '/contact', label: 'Contact Us' },
 ];
 
-export function Footer({ activeView, onNavigate }: FooterProps) {
+export function Footer({ activeView, onNavigate, onOpenCookieSettings }: FooterProps) {
   const handleLinkClick = (e: MouseEvent<HTMLAnchorElement>, view: ActiveView) => {
     if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) {
       return;
@@ -87,16 +88,26 @@ export function Footer({ activeView, onNavigate }: FooterProps) {
 
         <div className="pt-4 border-t border-[#EAE3CE]/80 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs font-semibold text-[#5A657A]">
           <p>© 2026 Play Aura. All Rights Reserved.</p>
-          <a
-            href="/"
-            onClick={(e) => handleLinkClick(e, 'home')}
-            className="hover:text-[#1D6B52] transition-colors"
-          >
-            Back to Games
-          </a>
+          <div className="flex flex-wrap items-center gap-4">
+            {onOpenCookieSettings && (
+              <button
+                type="button"
+                onClick={onOpenCookieSettings}
+                className="hover:text-[#1D6B52] transition-colors cursor-pointer"
+              >
+                Cookie Settings
+              </button>
+            )}
+            <a
+              href="/"
+              onClick={(e) => handleLinkClick(e, 'home')}
+              className="hover:text-[#1D6B52] transition-colors"
+            >
+              Back to Games
+            </a>
+          </div>
         </div>
       </div>
     </footer>
   );
 }
-
