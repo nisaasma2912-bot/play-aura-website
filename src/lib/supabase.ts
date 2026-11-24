@@ -6,7 +6,11 @@ import type {
   GameRecord,
   GameStatus,
   GameSuggestionRecord,
+  ReplySenderType,
+  SuggestionReplyRecord,
   SuggestionStatus,
+  VisitorConversationRecord,
+  VisitorInboxData,
 } from '../types/game';
 import {
   getRemainingCooldownSeconds,
@@ -64,6 +68,12 @@ interface DbGameRow {
   title: string;
   slug?: string | null;
   description?: string | null;
+  how_to_play?: string | null;
+  objective?: string | null;
+  keyboard_controls?: string | null;
+  mouse_controls?: string | null;
+  touch_controls?: string | null;
+  tips?: string | null;
   thumbnail_url?: string | null;
   game_entry_url?: string | null;
   game_url?: string | null;
@@ -72,6 +82,13 @@ interface DbGameRow {
   is_published?: boolean | null;
   created_at: string;
   updated_at?: string | null;
+}
+
+function isMissingGamesColumnError(err: { code?: string; message?: string } | null | undefined): boolean {
+  if (!err) return false;
+  if (err.code === 'PGRST204' || err.code === '42703') return true;
+  const msg = err.message || '';
+  return /could not find the '.*' column|column .* does not exist/i.test(msg);
 }
 
 function normalizeStatus(row: DbGameRow): GameStatus {
@@ -103,6 +120,12 @@ function mapDbRow(row: DbGameRow): GameRecord {
     title: row.title,
     slug: row.slug || row.id,
     description: row.description ?? '',
+    howToPlay: row.how_to_play ?? '',
+    objective: row.objective ?? '',
+    keyboardControls: row.keyboard_controls ?? '',
+    mouseControls: row.mouse_controls ?? '',
+    touchControls: row.touch_controls ?? '',
+    tips: row.tips ?? '',
     thumbnailUrl: resolveThumbnailUrl(row.thumbnail_url),
     gameEntryUrl: row.game_entry_url || row.game_url || '',
     storagePath: row.storage_path,
@@ -241,12 +264,19 @@ export async function fetchAllGamesForAdmin(): Promise<GameRecord[]> {
 export interface CreateGameInput {
   title: string;
   description: string;
+  howToPlay?: string;
+  objective?: string;
+  keyboardControls?: string;
+  mouseControls?: string;
+  touchControls?: string;
+  tips?: string;
   status: GameStatus;
   entryPath: string;
   extractedFiles: ExtractedGameFile[];
   thumbnailFile?: File | null;
   thumbnailUrlFallback?: string;
   onProgress?: (label: string, percent: number) => void;
+  onSchemaFallbackWarning?: (message: string) => void;
 }
 
 function getThumbnailContentType(file: File): { ext: string; contentType: string } {
@@ -361,20 +391,62 @@ export async function uploadAndCreateGame(input: CreateGameInput): Promise<GameR
     .from(GAMES_BUCKET)
     .getPublicUrl(`${storageFolder}/${input.entryPath}`);
 
-  const { data: inserted, error: dbErr } = await supabase
-    .from('games')
-    .insert({
-      title: input.title.trim(),
-      slug,
-      description: input.description.trim(),
-      thumbnail_url: finalThumbnailUrl,
-      game_entry_url: entryData.publicUrl,
-      storage_path: storageFolder,
-      status: input.status,
-      is_published: input.status === 'published',
-    })
-    .select()
-    .single();
+  const coreInsertPayload = {
+    title: input.title.trim(),
+    slug,
+    description: input.description.trim(),
+    thumbnail_url: finalThumbnailUrl,
+    game_entry_url: entryData.publicUrl,
+    storage_path: storageFolder,
+    status: input.status,
+    is_published: input.status === 'published',
+  };
+
+  const extraColumns = {
+    how_to_play: (input.howToPlay || '').trim(),
+    objective: (input.objective || '').trim(),
+    keyboard_controls: (input.keyboardControls || '').trim(),
+    mouse_controls: (input.mouseControls || '').trim(),
+    touch_controls: (input.touchControls || '').trim(),
+    tips: (input.tips || '').trim(),
+  };
+  const hasExtraValues = Object.values(extraColumns).some((val) => val.length > 0);
+
+  let inserted: unknown = null;
+  let dbErr: { code?: string; message?: string } | null = null;
+
+  if (hasExtraValues) {
+    const attempt = await supabase
+      .from('games')
+      .insert({ ...coreInsertPayload, ...extraColumns })
+      .select()
+      .single();
+    inserted = attempt.data;
+    dbErr = attempt.error;
+
+    if (dbErr && isMissingGamesColumnError(dbErr)) {
+      const fallbackAttempt = await supabase
+        .from('games')
+        .insert(coreInsertPayload)
+        .select()
+        .single();
+      inserted = fallbackAttempt.data;
+      dbErr = fallbackAttempt.error;
+      if (!dbErr) {
+        input.onSchemaFallbackWarning?.(
+          'Game saved with core Description. Run the additive game details SQL migration to enable saving separate How to Play, Objective, Controls, and Tips columns.'
+        );
+      }
+    }
+  } else {
+    const attempt = await supabase
+      .from('games')
+      .insert(coreInsertPayload)
+      .select()
+      .single();
+    inserted = attempt.data;
+    dbErr = attempt.error;
+  }
 
   if (dbErr || !inserted) {
     throw new Error(`Could not save game record: ${dbErr?.message || 'Unknown error'}`);
@@ -389,9 +461,16 @@ export async function updateGameAdmin(
   updates: {
     title: string;
     description: string;
+    howToPlay?: string;
+    objective?: string;
+    keyboardControls?: string;
+    mouseControls?: string;
+    touchControls?: string;
+    tips?: string;
     thumbnailUrl: string;
     thumbnailFile?: File | null;
     status: GameStatus;
+    onSchemaFallbackWarning?: (message: string) => void;
   }
 ): Promise<GameRecord> {
   if (!supabase) throw new Error('Supabase is not connected.');
@@ -423,19 +502,72 @@ export async function updateGameAdmin(
     nextThumbUrl = pubThumb.publicUrl;
   }
 
-  const { data, error } = await supabase
-    .from('games')
-    .update({
-      title: updates.title.trim(),
-      description: updates.description.trim(),
-      thumbnail_url: nextThumbUrl,
-      status: updates.status,
-      is_published: updates.status === 'published',
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', game.id)
-    .select()
-    .single();
+  const coreUpdatePayload = {
+    title: updates.title.trim(),
+    description: updates.description.trim(),
+    thumbnail_url: nextThumbUrl,
+    status: updates.status,
+    is_published: updates.status === 'published',
+    updated_at: new Date().toISOString(),
+  };
+
+  const extraColumns = {
+    how_to_play: (updates.howToPlay || '').trim(),
+    objective: (updates.objective || '').trim(),
+    keyboard_controls: (updates.keyboardControls || '').trim(),
+    mouse_controls: (updates.mouseControls || '').trim(),
+    touch_controls: (updates.touchControls || '').trim(),
+    tips: (updates.tips || '').trim(),
+  };
+  const shouldAttemptExtraColumns =
+    Object.values(extraColumns).some((val) => val.length > 0) ||
+    Boolean(
+      game.howToPlay ||
+        game.objective ||
+        game.keyboardControls ||
+        game.mouseControls ||
+        game.touchControls ||
+        game.tips
+    );
+
+  let data: unknown = null;
+  let error: { code?: string; message?: string } | null = null;
+
+  if (shouldAttemptExtraColumns) {
+    const attempt = await supabase
+      .from('games')
+      .update({ ...coreUpdatePayload, ...extraColumns })
+      .eq('id', game.id)
+      .select()
+      .single();
+    data = attempt.data;
+    error = attempt.error;
+
+    if (error && isMissingGamesColumnError(error)) {
+      const fallbackAttempt = await supabase
+        .from('games')
+        .update(coreUpdatePayload)
+        .eq('id', game.id)
+        .select()
+        .single();
+      data = fallbackAttempt.data;
+      error = fallbackAttempt.error;
+      if (!error) {
+        updates.onSchemaFallbackWarning?.(
+          'Saved title, description, thumbnail, and status. Run the additive game details SQL migration to store separate How to Play, Objective, Controls, and Tips columns.'
+        );
+      }
+    }
+  } else {
+    const attempt = await supabase
+      .from('games')
+      .update(coreUpdatePayload)
+      .eq('id', game.id)
+      .select()
+      .single();
+    data = attempt.data;
+    error = attempt.error;
+  }
 
   if (error || !data) {
     throw new Error(error?.message || 'Could not update game.');
@@ -510,6 +642,17 @@ interface DbSuggestionRow {
   visitor_token_hash: string;
   status: string;
   created_at: string;
+  admin_read_at?: string | null;
+}
+
+interface DbSuggestionReplyRow {
+  id: string;
+  suggestion_id: string;
+  sender_type: string;
+  body: string;
+  admin_user_id?: string | null;
+  visitor_read_at?: string | null;
+  created_at: string;
 }
 
 interface DbBlockedVisitorRow {
@@ -520,18 +663,71 @@ interface DbBlockedVisitorRow {
   blocked_by?: string | null;
 }
 
+function isMissingMessagingSchemaError(
+  err: { code?: string; message?: string } | null | undefined
+): boolean {
+  if (!err) return false;
+  if (
+    err.code === 'PGRST202' ||
+    err.code === 'PGRST204' ||
+    err.code === 'PGRST205' ||
+    err.code === '42P01' ||
+    err.code === '42703' ||
+    err.code === '42883'
+  ) {
+    return true;
+  }
+  const msg = err.message || '';
+  return /could not find the (function|table)|column .* does not exist|relation .* does not exist/i.test(
+    msg
+  );
+}
+
 function normalizeSuggestionStatus(raw: string): SuggestionStatus {
   if (raw === 'reviewed' || raw === 'archived') return raw;
   return 'new';
 }
 
-function mapSuggestionRow(row: DbSuggestionRow): GameSuggestionRecord {
+function normalizeSenderType(raw: string): ReplySenderType {
+  return raw === 'visitor' ? 'visitor' : 'admin';
+}
+
+function mapSuggestionReplyRow(row: DbSuggestionReplyRow): SuggestionReplyRecord {
+  return {
+    id: row.id,
+    suggestionId: row.suggestion_id,
+    senderType: normalizeSenderType(row.sender_type),
+    body: row.body,
+    adminUserId: row.admin_user_id ?? null,
+    visitorReadAt: row.visitor_read_at ?? null,
+    createdAt: row.created_at,
+  };
+}
+
+function deduplicateReplies(replies: SuggestionReplyRecord[]): SuggestionReplyRecord[] {
+  const seen = new Set<string>();
+  const unique: SuggestionReplyRecord[] = [];
+  for (const r of replies) {
+    if (!r.id || seen.has(r.id)) continue;
+    seen.add(r.id);
+    unique.push(r);
+  }
+  unique.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  return unique;
+}
+
+function mapSuggestionRow(
+  row: DbSuggestionRow,
+  replies: SuggestionReplyRecord[] = []
+): GameSuggestionRecord {
   return {
     id: row.id,
     message: row.message,
     visitorTokenHash: row.visitor_token_hash,
     status: normalizeSuggestionStatus(row.status),
     createdAt: row.created_at,
+    adminReadAt: row.admin_read_at ?? null,
+    replies: deduplicateReplies(replies),
   };
 }
 
@@ -621,17 +817,72 @@ export async function submitGameSuggestion(rawMessage: string): Promise<SubmitSu
   };
 }
 
-export async function fetchAllSuggestionsAdmin(): Promise<GameSuggestionRecord[]> {
+export async function fetchAllSuggestionsWithRepliesAdmin(): Promise<{
+  suggestions: GameSuggestionRecord[];
+  messagingSupported: boolean;
+}> {
   if (!supabase) throw new Error('Supabase is not connected.');
-  const { data, error } = await supabase
+
+  let messagingSupported = true;
+  let suggestionRows: DbSuggestionRow[] = [];
+
+  const primaryQuery = await supabase
     .from('game_suggestions')
-    .select('id, message, visitor_token_hash, status, created_at')
+    .select('id, message, visitor_token_hash, status, created_at, admin_read_at')
     .order('created_at', { ascending: false });
 
-  if (error) {
-    throw new Error(error.message || 'Unable to load game suggestions.');
+  if (primaryQuery.error) {
+    if (!isMissingMessagingSchemaError(primaryQuery.error)) {
+      throw new Error(primaryQuery.error.message || 'Unable to load game suggestions.');
+    }
+    messagingSupported = false;
+    const legacyQuery = await supabase
+      .from('game_suggestions')
+      .select('id, message, visitor_token_hash, status, created_at')
+      .order('created_at', { ascending: false });
+    if (legacyQuery.error) {
+      throw new Error(legacyQuery.error.message || 'Unable to load game suggestions.');
+    }
+    suggestionRows = (legacyQuery.data || []) as DbSuggestionRow[];
+  } else {
+    suggestionRows = (primaryQuery.data || []) as DbSuggestionRow[];
   }
-  return ((data || []) as DbSuggestionRow[]).map(mapSuggestionRow);
+
+  const repliesBySuggestion = new Map<string, SuggestionReplyRecord[]>();
+
+  if (messagingSupported) {
+    const repliesQuery = await supabase
+      .from('suggestion_replies')
+      .select('id, suggestion_id, sender_type, body, admin_user_id, visitor_read_at, created_at')
+      .order('created_at', { ascending: true });
+
+    if (repliesQuery.error) {
+      if (isMissingMessagingSchemaError(repliesQuery.error)) {
+        messagingSupported = false;
+      } else {
+        throw new Error(repliesQuery.error.message || 'Unable to load conversation replies.');
+      }
+    } else {
+      for (const row of (repliesQuery.data || []) as DbSuggestionReplyRow[]) {
+        const mapped = mapSuggestionReplyRow(row);
+        const list = repliesBySuggestion.get(mapped.suggestionId) || [];
+        list.push(mapped);
+        repliesBySuggestion.set(mapped.suggestionId, list);
+      }
+    }
+  }
+
+  return {
+    messagingSupported,
+    suggestions: suggestionRows.map((row) =>
+      mapSuggestionRow(row, repliesBySuggestion.get(row.id) || [])
+    ),
+  };
+}
+
+export async function fetchAllSuggestionsAdmin(): Promise<GameSuggestionRecord[]> {
+  const res = await fetchAllSuggestionsWithRepliesAdmin();
+  return res.suggestions;
 }
 
 export async function updateSuggestionStatusAdmin(
@@ -639,17 +890,97 @@ export async function updateSuggestionStatusAdmin(
   status: SuggestionStatus
 ): Promise<GameSuggestionRecord> {
   if (!supabase) throw new Error('Supabase is not connected.');
-  const { data, error } = await supabase
+  const attempt = await supabase
     .from('game_suggestions')
     .update({ status })
     .eq('id', id)
-    .select('id, message, visitor_token_hash, status, created_at')
+    .select('id, message, visitor_token_hash, status, created_at, admin_read_at')
     .single();
 
-  if (error || !data) {
-    throw new Error(error?.message || 'Could not update suggestion status.');
+  if (attempt.error && isMissingMessagingSchemaError(attempt.error)) {
+    const legacy = await supabase
+      .from('game_suggestions')
+      .update({ status })
+      .eq('id', id)
+      .select('id, message, visitor_token_hash, status, created_at')
+      .single();
+    if (legacy.error || !legacy.data) {
+      throw new Error(legacy.error?.message || 'Could not update suggestion status.');
+    }
+    return mapSuggestionRow(legacy.data as DbSuggestionRow);
   }
-  return mapSuggestionRow(data as DbSuggestionRow);
+
+  if (attempt.error || !attempt.data) {
+    throw new Error(attempt.error?.message || 'Could not update suggestion status.');
+  }
+  return mapSuggestionRow(attempt.data as DbSuggestionRow);
+}
+
+export async function markSuggestionReadAdmin(suggestionId: string): Promise<string | null> {
+  if (!supabase) return null;
+  const { data, error } = await supabase.rpc('mark_suggestion_read_admin', {
+    p_suggestion_id: suggestionId,
+  });
+
+  if (error) {
+    if (isMissingMessagingSchemaError(error)) {
+      return null;
+    }
+    throw new Error(error.message || 'Could not mark message as read.');
+  }
+
+  const payload = (data || {}) as { ok?: boolean; admin_read_at?: string | null };
+  if (!payload.ok) return null;
+  return payload.admin_read_at ?? new Date().toISOString();
+}
+
+export async function sendAdminSuggestionReply(
+  suggestionId: string,
+  rawBody: string
+): Promise<{
+  reply: SuggestionReplyRecord;
+  suggestionStatus: SuggestionStatus;
+  adminReadAt: string | null;
+}> {
+  if (!supabase) throw new Error('Supabase is not connected.');
+  const cleanBody = rawBody.trim();
+  if (!cleanBody) {
+    throw new Error('Please enter a reply message before sending.');
+  }
+  if (cleanBody.length > 2000) {
+    throw new Error('Replies must be 2000 characters or fewer.');
+  }
+
+  const { data, error } = await supabase.rpc('send_admin_suggestion_reply', {
+    p_suggestion_id: suggestionId,
+    p_body: cleanBody,
+  });
+
+  if (error) {
+    if (isMissingMessagingSchemaError(error)) {
+      throw new Error(
+        'The visitor messaging SQL migration is not installed yet on Supabase. Run 20261122_visitor_messaging.sql in your Supabase SQL Editor first.'
+      );
+    }
+    throw new Error(error.message || 'Could not send reply.');
+  }
+
+  const payload = (data || {}) as {
+    ok?: boolean;
+    error?: string;
+    reply?: DbSuggestionReplyRow;
+    suggestion?: { id?: string; status?: string; admin_read_at?: string | null };
+  };
+
+  if (!payload.ok || !payload.reply) {
+    throw new Error(payload.error || 'Could not send reply.');
+  }
+
+  return {
+    reply: mapSuggestionReplyRow(payload.reply),
+    suggestionStatus: normalizeSuggestionStatus(payload.suggestion?.status || 'reviewed'),
+    adminReadAt: payload.suggestion?.admin_read_at ?? new Date().toISOString(),
+  };
 }
 
 export async function deleteSuggestionAdmin(id: string): Promise<void> {
@@ -708,4 +1039,139 @@ export async function unblockSuggestionVisitorAdmin(visitorTokenHash: string): P
   if (error) {
     throw new Error(error.message || 'Could not unblock visitor.');
   }
+}
+
+interface RawVisitorConversationPayload {
+  id: string;
+  message: string;
+  status: string;
+  created_at: string;
+  reply_count?: number;
+  unread_reply_count?: number;
+  latest_activity_at?: string;
+  replies?: DbSuggestionReplyRow[];
+}
+
+function mapVisitorConversation(raw: RawVisitorConversationPayload): VisitorConversationRecord {
+  const replies = deduplicateReplies((raw.replies || []).map(mapSuggestionReplyRow));
+  const unreadReplyCount =
+    typeof raw.unread_reply_count === 'number'
+      ? raw.unread_reply_count
+      : replies.filter((r) => r.senderType === 'admin' && !r.visitorReadAt).length;
+  return {
+    id: raw.id,
+    message: raw.message,
+    status: normalizeSuggestionStatus(raw.status),
+    createdAt: raw.created_at,
+    replyCount: typeof raw.reply_count === 'number' ? raw.reply_count : replies.length,
+    unreadReplyCount,
+    latestActivityAt:
+      raw.latest_activity_at ||
+      (replies.length > 0 ? replies[replies.length - 1].createdAt : raw.created_at),
+    replies,
+  };
+}
+
+export async function fetchVisitorInbox(): Promise<VisitorInboxData> {
+  if (!supabase) {
+    return { supported: false, unreadCount: 0, conversations: [] };
+  }
+
+  const visitorTokenHash = await getVisitorTokenHash();
+  const { data, error } = await supabase.rpc('get_visitor_inbox', {
+    p_visitor_token_hash: visitorTokenHash,
+  });
+
+  if (error) {
+    if (isMissingMessagingSchemaError(error)) {
+      return { supported: false, unreadCount: 0, conversations: [] };
+    }
+    throw new Error(error.message || 'Unable to load notifications right now.');
+  }
+
+  const payload = (data || {}) as {
+    ok?: boolean;
+    unread_count?: number;
+    conversations?: RawVisitorConversationPayload[];
+  };
+
+  if (!payload.ok) {
+    return { supported: true, unreadCount: 0, conversations: [] };
+  }
+
+  const seenConvIds = new Set<string>();
+  const conversations: VisitorConversationRecord[] = [];
+  for (const item of payload.conversations || []) {
+    if (!item?.id || seenConvIds.has(item.id)) continue;
+    seenConvIds.add(item.id);
+    conversations.push(mapVisitorConversation(item));
+  }
+
+  const unreadCount =
+    typeof payload.unread_count === 'number'
+      ? payload.unread_count
+      : conversations.reduce((sum, c) => sum + c.unreadReplyCount, 0);
+
+  return {
+    supported: true,
+    unreadCount,
+    conversations,
+  };
+}
+
+export async function fetchVisitorConversation(
+  suggestionId: string
+): Promise<VisitorConversationRecord | null> {
+  if (!supabase) return null;
+  const visitorTokenHash = await getVisitorTokenHash();
+  const { data, error } = await supabase.rpc('get_visitor_conversation', {
+    p_suggestion_id: suggestionId,
+    p_visitor_token_hash: visitorTokenHash,
+  });
+
+  if (error) {
+    if (isMissingMessagingSchemaError(error)) return null;
+    throw new Error(error.message || 'Unable to load conversation.');
+  }
+
+  const payload = (data || {}) as {
+    ok?: boolean;
+    conversation?: RawVisitorConversationPayload;
+  };
+  if (!payload.ok || !payload.conversation) {
+    return null;
+  }
+
+  return mapVisitorConversation(payload.conversation);
+}
+
+export async function markVisitorRepliesRead(
+  suggestionId?: string
+): Promise<{ unreadCount: number; readAt: string | null }> {
+  if (!supabase) {
+    return { unreadCount: 0, readAt: null };
+  }
+  const visitorTokenHash = await getVisitorTokenHash();
+  const { data, error } = await supabase.rpc('mark_visitor_replies_read', {
+    p_visitor_token_hash: visitorTokenHash,
+    p_suggestion_id: suggestionId ?? null,
+  });
+
+  if (error) {
+    if (isMissingMessagingSchemaError(error)) {
+      return { unreadCount: 0, readAt: null };
+    }
+    throw new Error(error.message || 'Unable to mark replies as read.');
+  }
+
+  const payload = (data || {}) as {
+    ok?: boolean;
+    unread_count?: number;
+    read_at?: string | null;
+  };
+
+  return {
+    unreadCount: typeof payload.unread_count === 'number' ? payload.unread_count : 0,
+    readAt: payload.read_at ?? new Date().toISOString(),
+  };
 }
