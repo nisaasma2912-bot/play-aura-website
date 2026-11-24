@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AlertCircle, Gamepad2, Loader2, RefreshCw, SearchX } from 'lucide-react';
 import { AdSenseSlot } from './components/AdSenseSlot';
 import { AdminPortal } from './components/AdminPortal';
+import { CookieConsentBanner } from './components/CookieConsentBanner';
 import { Footer } from './components/Footer';
 import { GameCard } from './components/GameCard';
 import { GamePlayerOverlay } from './components/GamePlayerOverlay';
@@ -9,13 +10,26 @@ import { GameSuggestionModal } from './components/GameSuggestionModal';
 import { Header, type ActiveView } from './components/Header';
 import { InfoPage } from './components/InfoPages';
 import { SearchBar } from './components/SearchBar';
+import { VisitorInboxModal } from './components/VisitorInboxModal';
+import { trackGameClose, trackGameOpen } from './lib/analytics';
+import {
+  applyStoredConsentOnLoad,
+  saveConsentChoice,
+  type AnalyticsConsentChoice,
+} from './lib/consent';
 import {
   fetchPublishedSupabaseGames,
+  fetchVisitorInbox,
   getCurrentAdminAuthState,
   isSupabaseConfigured,
+  markVisitorRepliesRead,
   supabase,
 } from './lib/supabase';
-import type { AdminUserSession, GameRecord } from './types/game';
+import type {
+  AdminUserSession,
+  GameRecord,
+  VisitorConversationRecord,
+} from './types/game';
 
 const SITE_ORIGIN = 'https://play-aura-website.pages.dev';
 
@@ -31,9 +45,9 @@ const ROUTE_PATHS: Record<ActiveView, string> = {
 
 const ROUTE_SEO: Record<ActiveView, { title: string; description: string }> = {
   home: {
-    title: 'Play Aura — Cozy Pastel HTML5 Games',
+    title: 'Free Online Games at Play Aura - Play Now!',
     description:
-      'Play Aura is a cheerful, child-friendly pastel HTML5 gaming playground. Click any game card to play instantly in your browser.',
+      'Play free online games at Play Aura, the website for instant web games. Explore exclusive new game releases every week on Play Aura.',
   },
   admin: {
     title: 'Admin — Play Aura',
@@ -42,12 +56,12 @@ const ROUTE_SEO: Record<ActiveView, { title: string; description: string }> = {
   'privacy-policy': {
     title: 'Privacy Policy — Play Aura',
     description:
-      'Read how Play Aura handles hosting logs, browser storage, anonymous suggestion tokens, and privacy questions.',
+      'Read how Play Aura handles analytics, cookies, hosting infrastructure, browser storage, anonymous suggestion tokens, and privacy inquiries.',
   },
   terms: {
     title: 'Terms & Conditions — Play Aura',
     description:
-      'Terms of use, third-party game ownership, suggestion guidelines, and moderation rules for Play Aura.',
+      'Terms of use, acceptable behavior, third-party game ownership, external links, and copyright contact details for Play Aura.',
   },
   contact: {
     title: 'Contact Us — Play Aura',
@@ -57,7 +71,7 @@ const ROUTE_SEO: Record<ActiveView, { title: string; description: string }> = {
   about: {
     title: 'About Us — Play Aura',
     description:
-      'Learn about Play Aura, an online browser gaming playground where visitors discover games and suggest new ideas.',
+      'Learn about Play Aura, an online browser gaming playground where visitors discover free games, read controls, and suggest new ideas.',
   },
   disclaimer: {
     title: 'Disclaimer — Play Aura',
@@ -106,32 +120,215 @@ export default function App() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [activeGame, setActiveGame] = useState<GameRecord | null>(null);
+  const activeGameSessionRef = useRef<GameRecord | null>(null);
+
   const [suggestionModalOpen, setSuggestionModalOpen] = useState(false);
+  const [inboxModalOpen, setInboxModalOpen] = useState(false);
+  const [inboxSupported, setInboxSupported] = useState(true);
+  const [inboxLoading, setInboxLoading] = useState(false);
+  const [inboxError, setInboxError] = useState<string | null>(null);
+  const [inboxUnreadCount, setInboxUnreadCount] = useState(0);
+  const [inboxConversations, setInboxConversations] = useState<VisitorConversationRecord[]>([]);
+  const inboxRequestInFlightRef = useRef(false);
+
+  const [consentChoice, setConsentChoice] = useState<AnalyticsConsentChoice | null>(null);
+  const [cookieBannerOpen, setCookieBannerOpen] = useState(false);
+
   const [adminSession, setAdminSession] = useState<AdminUserSession | null>(null);
   const [checkingAdminSession, setCheckingAdminSession] = useState<boolean>(isSupabaseConfigured);
 
-  const navigateTo = useCallback((view: ActiveView, replace = false) => {
-    setActiveView(view);
-    if (typeof window === 'undefined') return;
-    const targetPath = ROUTE_PATHS[view] || '/';
-    const currentNormalized = window.location.pathname.replace(/\/+$/, '') || '/';
-    if (currentNormalized !== targetPath) {
-      if (replace) {
-        window.history.replaceState({}, '', targetPath);
-      } else {
-        window.history.pushState({}, '', targetPath);
+  const loadVisitorInbox = useCallback(async (showSpinner = false) => {
+    if (!isSupabaseConfigured || inboxRequestInFlightRef.current) return;
+    inboxRequestInFlightRef.current = true;
+    if (showSpinner) {
+      setInboxLoading(true);
+    }
+    setInboxError(null);
+    try {
+      const data = await fetchVisitorInbox();
+      setInboxSupported(data.supported);
+      setInboxUnreadCount(data.unreadCount);
+      setInboxConversations(data.conversations);
+    } catch (err) {
+      if (showSpinner) {
+        setInboxError(
+          err instanceof Error ? err.message : 'Unable to load your notifications right now.'
+        );
       }
+    } finally {
+      inboxRequestInFlightRef.current = false;
+      if (showSpinner) {
+        setInboxLoading(false);
+      }
+    }
+  }, []);
+
+  const handleMarkConversationRead = useCallback(async (suggestionId: string) => {
+    setInboxConversations((prev) => {
+      const target = prev.find((c) => c.id === suggestionId);
+      if (!target || target.unreadReplyCount === 0) return prev;
+      const nowIso = new Date().toISOString();
+      return prev.map((c) =>
+        c.id === suggestionId
+          ? {
+              ...c,
+              unreadReplyCount: 0,
+              replies: c.replies.map((r) =>
+                r.senderType === 'admin' && !r.visitorReadAt
+                  ? { ...r, visitorReadAt: nowIso }
+                  : r
+              ),
+            }
+          : c
+      );
+    });
+
+    try {
+      const result = await markVisitorRepliesRead(suggestionId);
+      setInboxUnreadCount(result.unreadCount);
+      if (result.readAt) {
+        setInboxConversations((prev) =>
+          prev.map((c) =>
+            c.id === suggestionId
+              ? {
+                  ...c,
+                  unreadReplyCount: 0,
+                  replies: c.replies.map((r) =>
+                    r.senderType === 'admin' && !r.visitorReadAt
+                      ? { ...r, visitorReadAt: result.readAt }
+                      : r
+                  ),
+                }
+              : c
+          )
+        );
+      }
+    } catch {
+      // Refresh authoritative count on error
+      void loadVisitorInbox(false);
+    }
+  }, [loadVisitorInbox]);
+
+  const handleMarkAllNotificationsRead = useCallback(async () => {
+    const result = await markVisitorRepliesRead();
+    setInboxUnreadCount(result.unreadCount);
+    const stamp = result.readAt || new Date().toISOString();
+    setInboxConversations((prev) =>
+      prev.map((c) => ({
+        ...c,
+        unreadReplyCount: 0,
+        replies: c.replies.map((r) =>
+          r.senderType === 'admin' && !r.visitorReadAt ? { ...r, visitorReadAt: stamp } : r
+        ),
+      }))
+    );
+  }, []);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured || activeView === 'admin') return;
+
+    void loadVisitorInbox(false);
+
+    const handleVisibilityOrFocus = () => {
+      if (document.visibilityState === 'visible') {
+        void loadVisitorInbox(false);
+      }
+    };
+
+    window.addEventListener('focus', handleVisibilityOrFocus);
+    document.addEventListener('visibilitychange', handleVisibilityOrFocus);
+
+    const intervalMs = inboxModalOpen ? 6000 : 20000;
+    const pollId = window.setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        void loadVisitorInbox(false);
+      }
+    }, intervalMs);
+
+    return () => {
+      window.removeEventListener('focus', handleVisibilityOrFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
+      window.clearInterval(pollId);
+    };
+  }, [activeView, inboxModalOpen, loadVisitorInbox]);
+
+  useEffect(() => {
+    const stored = applyStoredConsentOnLoad();
+    setConsentChoice(stored);
+    if (stored === null) {
+      setCookieBannerOpen(true);
+    }
+  }, []);
+
+  const handleAcceptAnalytics = useCallback(() => {
+    saveConsentChoice('accepted');
+    setConsentChoice('accepted');
+    setCookieBannerOpen(false);
+  }, []);
+
+  const handleDeclineAnalytics = useCallback(() => {
+    saveConsentChoice('rejected');
+    setConsentChoice('rejected');
+    setCookieBannerOpen(false);
+  }, []);
+
+  const handleOpenGame = useCallback((game: GameRecord) => {
+    if (activeGameSessionRef.current?.id === game.id) {
+      return;
+    }
+    if (activeGameSessionRef.current && !activeGameSessionRef.current.id.startsWith('local-preview-')) {
+      trackGameClose(activeGameSessionRef.current);
+    }
+    activeGameSessionRef.current = game;
+    if (!game.id.startsWith('local-preview-')) {
+      trackGameOpen(game);
+    }
+    setActiveGame(game);
+    if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, behavior: 'auto' });
     }
   }, []);
 
+  const handleCloseGame = useCallback(() => {
+    const closingGame = activeGameSessionRef.current;
+    activeGameSessionRef.current = null;
+    if (closingGame && !closingGame.id.startsWith('local-preview-')) {
+      trackGameClose(closingGame);
+    }
+    setActiveGame(null);
+  }, []);
+
+  const navigateTo = useCallback(
+    (view: ActiveView, replace = false) => {
+      if (activeGameSessionRef.current) {
+        handleCloseGame();
+      }
+      setActiveView(view);
+      if (typeof window === 'undefined') return;
+      const targetPath = ROUTE_PATHS[view] || '/';
+      const currentNormalized = window.location.pathname.replace(/\/+$/, '') || '/';
+      if (currentNormalized !== targetPath) {
+        if (replace) {
+          window.history.replaceState({}, '', targetPath);
+        } else {
+          window.history.pushState({}, '', targetPath);
+        }
+        window.scrollTo({ top: 0, behavior: 'auto' });
+      }
+    },
+    [handleCloseGame]
+  );
+
   useEffect(() => {
     const handlePopState = () => {
+      if (activeGameSessionRef.current) {
+        handleCloseGame();
+      }
       setActiveView(getViewFromPathname(window.location.pathname));
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
+  }, [handleCloseGame]);
 
   const loadPublishedGames = useCallback(async () => {
     if (!isSupabaseConfigured) {
@@ -203,6 +400,7 @@ export default function App() {
 
   useEffect(() => {
     const seo = ROUTE_SEO[activeView];
+    const canonicalUrl = `${SITE_ORIGIN}${ROUTE_PATHS[activeView]}`;
     document.title = seo.title;
 
     const descMeta = document.querySelector<HTMLMetaElement>('meta[name="description"]');
@@ -217,7 +415,37 @@ export default function App() {
 
     const canonicalLink = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
     if (canonicalLink) {
-      canonicalLink.href = `${SITE_ORIGIN}${ROUTE_PATHS[activeView]}`;
+      canonicalLink.href = canonicalUrl;
+    }
+
+    const ogTitle = document.querySelector<HTMLMetaElement>('meta[property="og:title"]');
+    if (ogTitle) {
+      ogTitle.content = seo.title;
+    }
+
+    const ogDesc = document.querySelector<HTMLMetaElement>('meta[property="og:description"]');
+    if (ogDesc) {
+      ogDesc.content = seo.description;
+    }
+
+    const ogUrl = document.querySelector<HTMLMetaElement>('meta[property="og:url"]');
+    if (ogUrl) {
+      ogUrl.content = canonicalUrl;
+    }
+
+    const twitterTitle = document.querySelector<HTMLMetaElement>('meta[name="twitter:title"]');
+    if (twitterTitle) {
+      twitterTitle.content = seo.title;
+    }
+
+    const twitterDesc = document.querySelector<HTMLMetaElement>('meta[name="twitter:description"]');
+    if (twitterDesc) {
+      twitterDesc.content = seo.description;
+    }
+
+    const twitterUrl = document.querySelector<HTMLMetaElement>('meta[name="twitter:url"]');
+    if (twitterUrl) {
+      twitterUrl.content = canonicalUrl;
     }
   }, [activeView]);
 
@@ -250,138 +478,183 @@ export default function App() {
         activeView={activeView}
         onNavigate={(view) => navigateTo(view)}
         onOpenSuggestion={() => setSuggestionModalOpen(true)}
+        onOpenNotifications={() => {
+          setInboxModalOpen(true);
+          void loadVisitorInbox(true);
+        }}
+        unreadNotificationsCount={inboxUnreadCount}
       />
 
       <main className="relative z-10 flex-1">
-        {activeView === 'home' && (
-          <>
-            {/* Search Box */}
-            <section className="pt-8 sm:pt-12 pb-6 sm:pb-8 px-4 sm:px-6">
-              <div className="max-w-5xl mx-auto">
-                <SearchBar query={searchQuery} onQueryChange={setSearchQuery} />
-              </div>
-            </section>
-
-            {/* Published Games Grid / Friendly Empty State */}
-            <section
-              aria-label="Published games"
-              className="max-w-6xl mx-auto px-4 sm:px-6 pt-2 pb-12"
-            >
-              {loadingGames ? (
-                <div className="max-w-md mx-auto rounded-[32px] bg-white/95 backdrop-blur-sm border-2 border-[#CBE7FA] p-10 text-center bubble-shadow space-y-3 my-6">
-                  <Loader2
-                    className="w-8 h-8 animate-spin text-[#1E5B8A] mx-auto"
-                    aria-hidden="true"
-                  />
-                  <p className="font-display text-xl font-bold text-[#2B3445]">
-                    Loading Play Aura games...
-                  </p>
-                </div>
-              ) : loadError ? (
-                <div
-                  role="alert"
-                  className="max-w-md mx-auto rounded-[32px] bg-white/95 backdrop-blur-sm border-2 border-[#EAE5FA] p-8 text-center bubble-shadow space-y-4 my-6"
-                >
-                  <div className="w-12 h-12 mx-auto rounded-full bg-[#EAE5FA] text-[#4B3D8F] flex items-center justify-center">
-                    <AlertCircle className="w-6 h-6" aria-hidden="true" />
-                  </div>
-                  <h2 className="font-display text-2xl font-bold text-[#2B3445]">
-                    Could not load games
-                  </h2>
-                  <p className="text-sm text-[#5A657A]">{loadError}</p>
-                  <button
-                    type="button"
-                    onClick={() => void loadPublishedGames()}
-                    className="bubble-button inline-flex items-center gap-2 rounded-full bg-[#BFEAD6] hover:bg-[#A9E0C6] text-[#1D6B52] px-6 py-2.5 text-sm font-bold cursor-pointer"
-                  >
-                    <RefreshCw className="w-4 h-4" aria-hidden="true" />
-                    <span>Try Again</span>
-                  </button>
-                </div>
-              ) : publishedGames.length === 0 ? (
-                <div className="max-w-lg mx-auto rounded-[32px] bg-white/95 backdrop-blur-sm border-2 border-[#D8F3E5] p-8 sm:p-10 text-center bubble-shadow space-y-4 my-6">
-                  <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-[#D8F3E5] via-[#DDF0FC] to-[#EAE5FA] text-[#1D6B52] flex items-center justify-center border border-[#BFEAD6]">
-                    <Gamepad2 className="w-8 h-8" aria-hidden="true" />
-                  </div>
-                  <h2 className="font-display text-2xl sm:text-3xl font-bold text-[#2B3445] text-balance">
-                    No games yet! New adventures are coming soon.
-                  </h2>
-                </div>
-              ) : filteredGames.length === 0 ? (
-                <div className="max-w-md mx-auto rounded-[32px] bg-white/95 backdrop-blur-sm border-2 border-[#EAE5FA] p-8 text-center bubble-shadow space-y-4 my-6">
-                  <div className="w-12 h-12 mx-auto rounded-full bg-[#EAE5FA] text-[#4B3D8F] flex items-center justify-center">
-                    <SearchX className="w-6 h-6" aria-hidden="true" />
-                  </div>
-                  <h2 className="font-display text-2xl font-bold text-[#2B3445]">
-                    No matching games found
-                  </h2>
-                  <p className="text-sm text-[#5A657A]">
-                    We couldn&apos;t find a game matching &ldquo;{searchQuery.trim()}&rdquo;. Try another name or clear your search.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => setSearchQuery('')}
-                    className="bubble-button rounded-full bg-[#BFEAD6] hover:bg-[#A9E0C6] text-[#1D6B52] px-6 py-2.5 text-sm font-bold cursor-pointer"
-                  >
-                    Clear Search
-                  </button>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredGames.map((game, idx) => (
-                    <GameCard
-                      key={game.id}
-                      game={game}
-                      index={idx}
-                      onPlay={setActiveGame}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {/* AdSense Area safely below the catalog (renders only when configured) */}
-              <div className="mt-12">
-                <AdSenseSlot placement="home" />
-              </div>
-            </section>
-          </>
-        )}
-
-        {isInfoView(activeView) && (
-          <InfoPage view={activeView} onNavigate={(view) => navigateTo(view)} />
-        )}
-
-        {activeView === 'admin' && (
-          <AdminPortal
-            session={adminSession}
-            checkingSession={checkingAdminSession}
-            onSessionChange={setAdminSession}
-            onUnauthorizedRedirect={() => navigateTo('home', true)}
-            onLibraryUpdated={() => void loadPublishedGames()}
-            onPlayGame={setActiveGame}
-            onBackToGames={() => navigateTo('home')}
+        {/* Scrollable Normal-Flow Game Player Section */}
+        {activeGame && (
+          <GamePlayerOverlay
+            game={activeGame}
+            onClose={handleCloseGame}
           />
         )}
+
+        {/* Preserve Home / Info / Admin state while a game is open */}
+        <div className={activeGame ? 'hidden' : undefined}>
+          {activeView === 'home' && (
+            <>
+              {/* Search Box */}
+              <section className="pt-8 sm:pt-12 pb-6 sm:pb-8 px-4 sm:px-6">
+                <div className="max-w-5xl mx-auto">
+                  <SearchBar query={searchQuery} onQueryChange={setSearchQuery} />
+                </div>
+              </section>
+
+              {/* Published Games Grid / Friendly Empty State */}
+              <section
+                aria-label="Published games"
+                className="max-w-6xl mx-auto px-4 sm:px-6 pt-2 pb-12"
+              >
+                {loadingGames ? (
+                  <div className="max-w-md mx-auto rounded-[32px] bg-white/95 backdrop-blur-sm border-2 border-[#CBE7FA] p-10 text-center bubble-shadow space-y-3 my-6">
+                    <Loader2
+                      className="w-8 h-8 animate-spin text-[#1E5B8A] mx-auto"
+                      aria-hidden="true"
+                    />
+                    <p className="font-display text-xl font-bold text-[#2B3445]">
+                      Loading Play Aura games...
+                    </p>
+                  </div>
+                ) : loadError ? (
+                  <div
+                    role="alert"
+                    className="max-w-md mx-auto rounded-[32px] bg-white/95 backdrop-blur-sm border-2 border-[#EAE5FA] p-8 text-center bubble-shadow space-y-4 my-6"
+                  >
+                    <div className="w-12 h-12 mx-auto rounded-full bg-[#EAE5FA] text-[#4B3D8F] flex items-center justify-center">
+                      <AlertCircle className="w-6 h-6" aria-hidden="true" />
+                    </div>
+                    <h2 className="font-display text-2xl font-bold text-[#2B3445]">
+                      Could not load games
+                    </h2>
+                    <p className="text-sm text-[#5A657A]">{loadError}</p>
+                    <button
+                      type="button"
+                      onClick={() => void loadPublishedGames()}
+                      className="bubble-button inline-flex items-center gap-2 rounded-full bg-[#BFEAD6] hover:bg-[#A9E0C6] text-[#1D6B52] px-6 py-2.5 text-sm font-bold cursor-pointer"
+                    >
+                      <RefreshCw className="w-4 h-4" aria-hidden="true" />
+                      <span>Try Again</span>
+                    </button>
+                  </div>
+                ) : publishedGames.length === 0 ? (
+                  <div className="max-w-lg mx-auto rounded-[32px] bg-white/95 backdrop-blur-sm border-2 border-[#D8F3E5] p-8 sm:p-10 text-center bubble-shadow space-y-4 my-6">
+                    <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-[#D8F3E5] via-[#DDF0FC] to-[#EAE5FA] text-[#1D6B52] flex items-center justify-center border border-[#BFEAD6]">
+                      <Gamepad2 className="w-8 h-8" aria-hidden="true" />
+                    </div>
+                    <h2 className="font-display text-2xl sm:text-3xl font-bold text-[#2B3445] text-balance">
+                      No games yet! New adventures are coming soon.
+                    </h2>
+                  </div>
+                ) : filteredGames.length === 0 ? (
+                  <div className="max-w-md mx-auto rounded-[32px] bg-white/95 backdrop-blur-sm border-2 border-[#EAE5FA] p-8 text-center bubble-shadow space-y-4 my-6">
+                    <div className="w-12 h-12 mx-auto rounded-full bg-[#EAE5FA] text-[#4B3D8F] flex items-center justify-center">
+                      <SearchX className="w-6 h-6" aria-hidden="true" />
+                    </div>
+                    <h2 className="font-display text-2xl font-bold text-[#2B3445]">
+                      No matching games found
+                    </h2>
+                    <p className="text-sm text-[#5A657A]">
+                      We couldn&apos;t find a game matching &ldquo;{searchQuery.trim()}&rdquo;. Try another name or clear your search.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery('')}
+                      className="bubble-button rounded-full bg-[#BFEAD6] hover:bg-[#A9E0C6] text-[#1D6B52] px-6 py-2.5 text-sm font-bold cursor-pointer"
+                    >
+                      Clear Search
+                    </button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredGames.map((game, idx) => (
+                      <GameCard
+                        key={game.id}
+                        game={game}
+                        index={idx}
+                        onPlay={handleOpenGame}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {/* AdSense Area safely below the catalog (renders only when configured) */}
+                <div className="mt-12">
+                  <AdSenseSlot placement="home" />
+                </div>
+              </section>
+            </>
+          )}
+
+          {isInfoView(activeView) && (
+            <InfoPage
+              view={activeView}
+              onNavigate={(view) => navigateTo(view)}
+              onOpenCookieSettings={() => setCookieBannerOpen(true)}
+            />
+          )}
+
+          {activeView === 'admin' && (
+            <AdminPortal
+              session={adminSession}
+              checkingSession={checkingAdminSession}
+              onSessionChange={setAdminSession}
+              onUnauthorizedRedirect={() => navigateTo('home', true)}
+              onLibraryUpdated={() => void loadPublishedGames()}
+              onPlayGame={handleOpenGame}
+              onBackToGames={() => navigateTo('home')}
+            />
+          )}
+        </div>
       </main>
 
       {/* Complete Professional Footer on Homepage & All 5 Information Pages */}
       {activeView !== 'admin' && (
-        <Footer activeView={activeView} onNavigate={(view) => navigateTo(view)} />
+        <Footer
+          activeView={activeView}
+          onNavigate={(view) => navigateTo(view)}
+          onOpenCookieSettings={() => setCookieBannerOpen(true)}
+        />
       )}
 
       {/* Game Suggestion Modal */}
       <GameSuggestionModal
         isOpen={suggestionModalOpen}
         onClose={() => setSuggestionModalOpen(false)}
+        onSuggestionSubmitted={() => void loadVisitorInbox(false)}
       />
 
-      {/* Instant Same-Page Game Player Overlay */}
-      {activeGame && (
-        <GamePlayerOverlay
-          game={activeGame}
-          onClose={() => setActiveGame(null)}
-        />
-      )}
+      {/* Visitor Notification Bell Inbox & Conversation Modal */}
+      <VisitorInboxModal
+        isOpen={inboxModalOpen}
+        supported={inboxSupported}
+        loading={inboxLoading}
+        error={inboxError}
+        unreadCount={inboxUnreadCount}
+        conversations={inboxConversations}
+        onClose={() => setInboxModalOpen(false)}
+        onRefresh={() => loadVisitorInbox(true)}
+        onOpenSuggestionModal={() => setSuggestionModalOpen(true)}
+        onMarkConversationRead={handleMarkConversationRead}
+        onMarkAllRead={handleMarkAllNotificationsRead}
+      />
+
+      {/* Non-blocking Cookie & Analytics Preferences Banner */}
+      <CookieConsentBanner
+        isVisible={cookieBannerOpen && activeView !== 'admin'}
+        currentChoice={consentChoice}
+        onAccept={handleAcceptAnalytics}
+        onDecline={handleDeclineAnalytics}
+        onDismiss={() => setCookieBannerOpen(false)}
+        onOpenPrivacyPolicy={(view) => {
+          setCookieBannerOpen(false);
+          navigateTo(view);
+        }}
+      />
     </div>
   );
 }
