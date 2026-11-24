@@ -521,16 +521,18 @@ export default function App() {
         </div>
       )}
 
-      <Header
-        activeView={activeView}
-        onNavigate={(view) => navigateTo(view)}
-        onOpenSuggestion={() => setSuggestionModalOpen(true)}
-        onOpenNotifications={() => {
-          setInboxModalOpen(true);
-          void loadVisitorInbox(true);
-        }}
-        unreadNotificationsCount={inboxUnreadCount}
-      />
+      {!activeGame && (
+        <Header
+          activeView={activeView}
+          onNavigate={(view) => navigateTo(view)}
+          onOpenSuggestion={() => setSuggestionModalOpen(true)}
+          onOpenNotifications={() => {
+            setInboxModalOpen(true);
+            void loadVisitorInbox(true);
+          }}
+          unreadNotificationsCount={inboxUnreadCount}
+        />
+      )}
 
       <main className="relative z-10 flex-1">
         {/* Scrollable Normal-Flow Game Player Section */}
