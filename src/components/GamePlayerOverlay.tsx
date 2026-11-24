@@ -337,7 +337,7 @@ export function GamePlayerOverlay({
             className={
               activeMax
                 ? 'w-full flex-1 min-h-0 bg-[#FFFDF6] relative'
-                : 'w-full aspect-video bg-[#FFFDF6] relative'
+                : 'w-full h-[70dvh] sm:h-auto sm:aspect-video bg-[#FFFDF6] relative'
             }
           >
             {loadingEntry ? (
