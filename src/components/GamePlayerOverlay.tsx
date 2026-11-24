@@ -241,32 +241,32 @@ export function GamePlayerOverlay({
   return (
     <section
       aria-label={`${game.title} game player`}
-      className="w-full max-w-[1440px] mx-auto px-1.5 sm:px-4 lg:px-6 pt-3 sm:pt-5 pb-10"
+      className="w-full max-w-[1440px] mx-auto px-1 sm:px-4 lg:px-6 pt-2 sm:pt-5 pb-8 sm:pb-10"
     >
       {/* Player Control Bar */}
-      <div className="w-full sm:max-w-[min(100%,calc(82dvh*16/9))] mx-auto flex flex-wrap items-center justify-between gap-2 sm:gap-4 mb-3 sm:mb-4 bg-white/95 border-2 border-[#CBE7FA] rounded-full px-3 sm:px-5 py-2 bubble-shadow">
+      <div className="w-full sm:max-w-[min(100%,calc(82dvh*16/9))] mx-auto flex flex-wrap items-center justify-between gap-1.5 sm:gap-4 mb-2 sm:mb-4 bg-white/95 border-2 border-[#CBE7FA] rounded-2xl sm:rounded-full px-2 sm:px-5 py-1.5 sm:py-2 bubble-shadow">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <button
             type="button"
             onClick={handleSafeClose}
-            className="bubble-button inline-flex items-center gap-1.5 rounded-full bg-[#FAF5E8] hover:bg-[#D8F3E5] text-[#2B3445] hover:text-[#1D6B52] px-3.5 py-2 text-sm font-bold whitespace-nowrap shrink-0 cursor-pointer"
+            className="bubble-button inline-flex items-center gap-1.5 rounded-full bg-[#FAF5E8] hover:bg-[#D8F3E5] text-[#2B3445] hover:text-[#1D6B52] px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-xs sm:text-sm font-bold whitespace-nowrap shrink-0 cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" aria-hidden="true" />
             <span>Back</span>
           </button>
           <div className="min-w-0">
-            <h2 className="font-display text-base sm:text-xl font-bold text-[#2B3445] truncate">
+            <h2 className="hidden sm:block font-display text-base sm:text-xl font-bold text-[#2B3445] truncate">
               {game.title}
             </h2>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           <button
             type="button"
             onClick={() => setReloadKey((k) => k + 1)}
             aria-label="Restart game"
-            className="bubble-button inline-flex items-center gap-1.5 rounded-full bg-[#EAE5FA] hover:bg-[#DFD7F8] text-[#4B3D8F] px-3 sm:px-3.5 py-2 text-sm font-bold whitespace-nowrap cursor-pointer"
+            className="bubble-button inline-flex items-center gap-1.5 rounded-full bg-[#EAE5FA] hover:bg-[#DFD7F8] text-[#4B3D8F] px-2 sm:px-3.5 py-1.5 sm:py-2 text-xs sm:text-sm font-bold whitespace-nowrap cursor-pointer"
           >
             <RotateCcw className="w-4 h-4" aria-hidden="true" />
             <span className="hidden sm:inline">Restart</span>
@@ -290,7 +290,7 @@ export function GamePlayerOverlay({
             type="button"
             onClick={handleSafeClose}
             aria-label="Close game player"
-            className="bubble-button inline-flex items-center justify-center w-9 h-9 rounded-full bg-[#FAF5E8] hover:bg-[#CBE7FA] text-[#2B3445] cursor-pointer"
+            className="bubble-button inline-flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#FAF5E8] hover:bg-[#CBE7FA] text-[#2B3445] cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -298,8 +298,8 @@ export function GamePlayerOverlay({
       </div>
 
       {/* Game viewport with compact recommendations on both sides */}
-      <div className="w-full max-w-[1600px] mx-auto grid grid-cols-[clamp(52px,6vw,88px)_minmax(0,1fr)_clamp(52px,6vw,88px)] gap-1.5 sm:gap-2.5 items-start">
-        <aside aria-label="Recommended games left" className="flex flex-col items-center gap-2 sm:gap-3 pt-1">
+      <div className="w-full max-w-[1600px] mx-auto grid grid-cols-1 sm:grid-cols-[clamp(52px,6vw,88px)_minmax(0,1fr)_clamp(52px,6vw,88px)] gap-1.5 sm:gap-2.5 items-start">
+        <aside aria-label="Recommended games left" className="hidden sm:flex flex-col items-center gap-2 sm:gap-3 pt-1">
           {recommendationGames.map((item, index) => (
             <button key={'left-' + item.id} type="button" onClick={() => onPlayRecommendation(item)} title={item.title} aria-label={'Play ' + item.title} className="w-full min-w-0 rounded-lg sm:rounded-xl border border-[#CBE7FA] bg-white p-1 sm:p-1.5 flex flex-col items-center gap-1 hover:bg-[#EAF7FF] cursor-pointer">
               <div className="w-full aspect-[4/3] overflow-hidden rounded-md bg-[#FAF5E8]">
@@ -367,7 +367,7 @@ export function GamePlayerOverlay({
           </div>
         </div>
         </div>
-        <aside aria-label="Recommended games right" className="flex flex-col items-center gap-2 sm:gap-3 pt-1">
+        <aside aria-label="Recommended games right" className="hidden sm:flex flex-col items-center gap-2 sm:gap-3 pt-1">
           {recommendationGames.map((item, index) => (
             <button key={'right-' + item.id} type="button" onClick={() => onPlayRecommendation(item)} title={item.title} aria-label={'Play ' + item.title} className="w-full min-w-0 rounded-lg sm:rounded-xl border border-[#CBE7FA] bg-white p-1 sm:p-1.5 flex flex-col items-center gap-1 hover:bg-[#EAF7FF] cursor-pointer">
               <div className="w-full aspect-[4/3] overflow-hidden rounded-md bg-[#FAF5E8]">
@@ -381,8 +381,8 @@ export function GamePlayerOverlay({
 
       {/* Separate Scrollable Game Information Section (only renders non-empty admin-provided sections) */}
       {hasAnyInfo && (
-        <div className="mt-6 sm:mt-8 w-full sm:max-w-[min(100%,calc(82dvh*16/9))] mx-auto">
-          <div className="rounded-[24px] sm:rounded-[32px] bg-white/96 border-2 border-[#CBE7FA] p-5 sm:p-8 bubble-shadow space-y-6">
+        <div className="mt-3 sm:mt-8 w-full sm:max-w-[min(100%,calc(82dvh*16/9))] mx-auto">
+          <div className="rounded-2xl sm:rounded-[32px] bg-white/96 border-2 border-[#CBE7FA] p-3 sm:p-8 bubble-shadow space-y-6">
             <div className="border-b border-[#EAE3CE] pb-4">
               <h3 className="font-display text-2xl sm:text-3xl font-bold text-[#2B3445] break-words">
                 About {game.title}
