@@ -240,264 +240,86 @@ export function GamePlayerOverlay({
   return (
     <section
       aria-label={`${game.title} game player`}
-      className="w-full max-w-[1440px] mx-auto px-1.5 sm:px-4 lg:px-6 pt-3 sm:pt-5 pb-10"
+      className="fixed inset-0 z-40 h-[100dvh] w-full max-w-none overflow-hidden bg-[#EAF8FF]/95 px-1.5 sm:px-3 pt-2 pb-2 flex flex-col"
     >
       {/* Player Control Bar */}
-      <div className="w-full sm:max-w-[min(100%,calc(82dvh*16/9))] mx-auto flex flex-wrap items-center justify-between gap-2 sm:gap-4 mb-3 sm:mb-4 bg-white/95 border-2 border-[#CBE7FA] rounded-full px-3 sm:px-5 py-2 bubble-shadow">
+      <div className="w-full max-w-[min(100%,1600px)] mx-auto h-12 sm:h-14 shrink-0 flex items-center justify-between gap-2 mb-2 sm:mb-3 bg-white/95 border-2 border-[#CBE7FA] rounded-full px-2.5 sm:px-5 bubble-shadow">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-          <button
-            type="button"
-            onClick={handleSafeClose}
-            className="bubble-button inline-flex items-center gap-1.5 rounded-full bg-[#FAF5E8] hover:bg-[#D8F3E5] text-[#2B3445] hover:text-[#1D6B52] px-3.5 py-2 text-sm font-bold whitespace-nowrap shrink-0 cursor-pointer"
-          >
-            <ArrowLeft className="w-4 h-4" aria-hidden="true" />
-            <span>Back</span>
+          <button type="button" onClick={handleSafeClose} className="bubble-button inline-flex items-center gap-1 rounded-full bg-[#FAF5E8] hover:bg-[#D8F3E5] text-[#2B3445] px-2.5 sm:px-3.5 py-2 text-xs sm:text-sm font-bold whitespace-nowrap shrink-0 cursor-pointer">
+            <ArrowLeft className="w-4 h-4" aria-hidden="true" /><span>Back</span>
           </button>
-          <div className="min-w-0">
-            <h2 className="font-display text-base sm:text-xl font-bold text-[#2B3445] truncate">
-              {game.title}
-            </h2>
-          </div>
+          <h2 className="font-display text-sm sm:text-xl font-bold text-[#2B3445] truncate">{game.title}</h2>
         </div>
-
-        <div className="flex items-center gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={() => setReloadKey((k) => k + 1)}
-            aria-label="Restart game"
-            className="bubble-button inline-flex items-center gap-1.5 rounded-full bg-[#EAE5FA] hover:bg-[#DFD7F8] text-[#4B3D8F] px-3 sm:px-3.5 py-2 text-sm font-bold whitespace-nowrap cursor-pointer"
-          >
-            <RotateCcw className="w-4 h-4" aria-hidden="true" />
-            <span className="hidden sm:inline">Restart</span>
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <button type="button" onClick={() => setReloadKey((k) => k + 1)} aria-label="Restart game" className="bubble-button inline-flex items-center gap-1 rounded-full bg-[#EAE5FA] text-[#4B3D8F] px-2.5 sm:px-3.5 py-2 text-xs sm:text-sm font-bold whitespace-nowrap cursor-pointer">
+            <RotateCcw className="w-4 h-4" aria-hidden="true" /><span className="hidden sm:inline">Restart</span>
           </button>
-
-          <button
-            type="button"
-            onClick={toggleFullscreen}
-            aria-label={activeMax ? 'Exit fullscreen' : 'Enter fullscreen'}
-            className="bubble-button inline-flex items-center gap-1.5 rounded-full bg-[#D8F3E5] hover:bg-[#BFEAD6] text-[#1D6B52] px-3 sm:px-3.5 py-2 text-sm font-bold whitespace-nowrap cursor-pointer"
-          >
-            {activeMax ? (
-              <Minimize2 className="w-4 h-4" aria-hidden="true" />
-            ) : (
-              <Maximize2 className="w-4 h-4" aria-hidden="true" />
-            )}
+          <button type="button" onClick={toggleFullscreen} aria-label={activeMax ? 'Exit fullscreen' : 'Enter fullscreen'} className="bubble-button inline-flex items-center gap-1 rounded-full bg-[#D8F3E5] text-[#1D6B52] px-2.5 sm:px-3.5 py-2 text-xs sm:text-sm font-bold whitespace-nowrap cursor-pointer">
+            {activeMax ? <Minimize2 className="w-4 h-4" aria-hidden="true" /> : <Maximize2 className="w-4 h-4" aria-hidden="true" />}
             <span className="hidden sm:inline">{activeMax ? 'Exit Fullscreen' : 'Fullscreen'}</span>
           </button>
-
-          <button
-            type="button"
-            onClick={handleSafeClose}
-            aria-label="Close game player"
-            className="bubble-button inline-flex items-center justify-center w-9 h-9 rounded-full bg-[#FAF5E8] hover:bg-[#CBE7FA] text-[#2B3445] cursor-pointer"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <button type="button" onClick={handleSafeClose} aria-label="Close game player" className="bubble-button inline-flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#FAF5E8] text-[#2B3445] cursor-pointer"><X className="w-4 h-4" /></button>
         </div>
       </div>
 
-      {/* Game stage with compact related-game recommendations */}
-      <div className="w-full max-w-[1440px] mx-auto flex flex-col lg:flex-row items-start gap-3 lg:gap-4">
-        <div
-          ref={stageRef}
-          className={
-            isExpandedFallback
-              ? 'fixed inset-1 sm:inset-2 z-50 rounded-[20px] sm:rounded-[24px] bg-[#FFFDF6] border-3 sm:border-4 border-[#BFEAD6] overflow-hidden flex flex-col bubble-shadow'
+      {/* Full-height game stage: compact thumbnail rails on BOTH sides */}
+      <div className="w-full max-w-[1760px] mx-auto flex-1 min-h-0 grid grid-cols-[58px_minmax(0,1fr)_58px] sm:grid-cols-[82px_minmax(0,1fr)_82px] lg:grid-cols-[104px_minmax(0,1fr)_104px] gap-1.5 sm:gap-3 items-center">
+        {!activeMax && (
+          <aside aria-label="More games, left side" className="h-full min-h-0 overflow-y-auto overflow-x-hidden flex flex-col items-center gap-2 py-1">
+            {recommendedGames.filter((_, index) => index % 2 === 0).map((recommendedGame, index) => (
+              <button key={recommendedGame.id} type="button" onClick={() => onPlayRecommendation(recommendedGame)} aria-label={'Play ' + recommendedGame.title} title={recommendedGame.title} className="group w-full shrink-0 flex flex-col items-center gap-1 rounded-lg border border-[#CBE7FA] bg-white/95 hover:bg-[#EAF7FF] p-1 sm:p-1.5 transition-colors cursor-pointer">
+                <div className="w-full aspect-[4/3] rounded-md overflow-hidden bg-[#FAF5E8]">
+                  <GameThumbnail src={recommendedGame.thumbnailUrl} alt="" title={recommendedGame.title} compact loading={index < 3 ? 'eager' : 'lazy'} imgClassName="w-full h-full object-cover" />
+                </div>
+                <span className="w-full text-[9px] sm:text-[10px] font-bold text-[#2B3445] leading-tight text-center line-clamp-2">{recommendedGame.title}</span>
+              </button>
+            ))}
+          </aside>
+        )}
+
+        <div className="min-w-0 min-h-0 w-full h-full flex items-center justify-center">
+          <div
+            ref={stageRef}
+            className={isExpandedFallback
+              ? 'fixed inset-1 sm:inset-2 z-50 rounded-[20px] bg-[#FFFDF6] border-4 border-[#BFEAD6] overflow-hidden flex flex-col bubble-shadow'
               : isFullscreen
                 ? 'w-screen h-screen bg-[#FFFDF6] overflow-hidden flex flex-col'
-                : 'w-full lg:flex-1 lg:min-w-0 rounded-[20px] sm:rounded-[28px] bg-[#FFFDF6] border-2 sm:border-3 border-[#CBE7FA] overflow-hidden bubble-shadow flex flex-col'
-          }
-        >
-          {activeMax && (
-            <div className="flex items-center justify-between px-4 py-2 bg-[#FFFDF6] border-b border-[#EAE3CE] shrink-0">
-              <span className="font-display font-bold text-[#2B3445] truncate pr-3">{game.title}</span>
-              <button
-                type="button"
-                onClick={toggleFullscreen}
-                className="rounded-full bg-[#D8F3E5] hover:bg-[#BFEAD6] text-[#1D6B52] px-3.5 py-1.5 text-xs font-bold whitespace-nowrap cursor-pointer"
-              >
-                Exit Fullscreen
-              </button>
-            </div>
-          )}
-
-          <div
-            className={
-              activeMax
-                ? 'w-full flex-1 min-h-0 bg-[#FFFDF6] relative'
-                : 'w-full h-[62dvh] min-h-[360px] max-h-[560px] sm:h-auto sm:min-h-[420px] sm:max-h-[560px] sm:aspect-video bg-[#FFFDF6] relative'
-            }
+                : 'relative w-full h-full max-h-full max-w-[min(100%,calc((100dvh-100px)*16/9))] aspect-video rounded-[12px] sm:rounded-[22px] bg-[#FFFDF6] border-2 sm:border-3 border-[#CBE7FA] overflow-hidden bubble-shadow flex flex-col'}
+            style={activeMax ? undefined : { width: 'min(100%, calc((100dvh - 100px) * 16 / 9))', aspectRatio: '16 / 9', height: 'auto', maxHeight: '100%' }}
           >
-            {loadingEntry ? (
-              <div className="w-full h-full flex flex-col items-center justify-center gap-3 text-sm font-bold text-[#1E5B8A]">
-                <Loader2 className="w-7 h-7 animate-spin" aria-hidden="true" />
-                <span>Loading game files...</span>
+            {activeMax && (
+              <div className="flex items-center justify-between px-4 py-2 bg-[#FFFDF6] border-b border-[#EAE3CE] shrink-0">
+                <span className="font-display font-bold text-[#2B3445] truncate pr-3">{game.title}</span>
+                <button type="button" onClick={toggleFullscreen} className="rounded-full bg-[#D8F3E5] text-[#1D6B52] px-3.5 py-1.5 text-xs font-bold whitespace-nowrap cursor-pointer">Exit Fullscreen</button>
               </div>
-            ) : entryError ? (
-              <div className="w-full h-full flex flex-col items-center justify-center gap-3 p-6 text-center">
-                <AlertCircle className="w-8 h-8 text-[#4B3D8F]" aria-hidden="true" />
-                <p className="font-display text-lg font-bold text-[#2B3445]">
-                  Unable to start game
-                </p>
-                <p className="text-sm text-[#5A657A] max-w-md">{entryError}</p>
-              </div>
-            ) : (
-              <iframe
-                key={`${game.id}-${reloadKey}`}
-                src={resolvedSrcDoc ? undefined : resolvedSrcUrl}
-                srcDoc={resolvedSrcDoc}
-                title={game.title}
-                sandbox="allow-scripts allow-same-origin allow-pointer-lock"
-                allow="fullscreen"
-                className="w-full h-full border-0 block"
-              />
             )}
+            <div className={activeMax ? 'w-full flex-1 min-h-0 bg-[#FFFDF6] relative' : 'w-full h-full min-h-0 bg-[#FFFDF6] relative'}>
+              {loadingEntry ? (
+                <div className="w-full h-full flex flex-col items-center justify-center gap-3 text-sm font-bold text-[#1E5B8A]"><Loader2 className="w-7 h-7 animate-spin" aria-hidden="true" /><span>Loading game files...</span></div>
+              ) : entryError ? (
+                <div className="w-full h-full flex flex-col items-center justify-center gap-3 p-6 text-center"><AlertCircle className="w-8 h-8 text-[#4B3D8F]" aria-hidden="true" /><p className="font-display text-lg font-bold text-[#2B3445]">Unable to start game</p><p className="text-sm text-[#5A657A] max-w-md">{entryError}</p></div>
+              ) : (
+                <iframe key={game.id + '-' + reloadKey} src={resolvedSrcDoc ? undefined : resolvedSrcUrl} srcDoc={resolvedSrcDoc} title={game.title} sandbox="allow-scripts allow-same-origin allow-pointer-lock" allow="fullscreen" className="w-full h-full border-0 block" />
+              )}
+            </div>
           </div>
         </div>
 
-        {!activeMax && recommendedGames.length > 0 && (
-          <aside
-            aria-label="Recommended games"
-            className="w-full lg:w-[224px] lg:shrink-0 rounded-[22px] border-2 border-[#CBE7FA] bg-white/95 p-3 bubble-shadow"
-          >
-            <h3 className="font-display text-base font-bold text-[#2B3445] mb-2.5">
-              More Games
-            </h3>
-            <div className="flex lg:flex-col gap-2.5 overflow-x-auto lg:overflow-visible pb-1 lg:pb-0">
-              {recommendedGames.map((recommendedGame, index) => (
-                <button
-                  key={recommendedGame.id}
-                  type="button"
-                  onClick={() => onPlayRecommendation(recommendedGame)}
-                  className="group flex items-center gap-2.5 text-left rounded-xl border border-[#DDF0FC] bg-[#FFFDF6] hover:bg-[#EAF7FF] hover:border-[#8AC5F0] p-1.5 transition-colors cursor-pointer min-w-[178px] lg:min-w-0 lg:w-full"
-                  aria-label={`Play ${recommendedGame.title}`}
-                >
-                  <div className="w-[68px] h-[51px] rounded-lg overflow-hidden bg-[#FAF5E8] shrink-0">
-                    <GameThumbnail
-                      src={recommendedGame.thumbnailUrl}
-                      alt=""
-                      title={recommendedGame.title}
-                      compact
-                      loading={index < 3 ? 'eager' : 'lazy'}
-                      imgClassName="w-full h-full object-cover"
-                    />
-                  </div>
-                  <span className="min-w-0 font-display text-xs sm:text-sm font-bold text-[#2B3445] leading-snug line-clamp-2 group-hover:text-[#1E5B8A]">
-                    {recommendedGame.title}
-                  </span>
-                </button>
-              ))}
-            </div>
+        {!activeMax && (
+          <aside aria-label="More games, right side" className="h-full min-h-0 overflow-y-auto overflow-x-hidden flex flex-col items-center gap-2 py-1">
+            {recommendedGames.filter((_, index) => index % 2 === 1).map((recommendedGame, index) => (
+              <button key={recommendedGame.id} type="button" onClick={() => onPlayRecommendation(recommendedGame)} aria-label={'Play ' + recommendedGame.title} title={recommendedGame.title} className="group w-full shrink-0 flex flex-col items-center gap-1 rounded-lg border border-[#CBE7FA] bg-white/95 hover:bg-[#EAF7FF] p-1 sm:p-1.5 transition-colors cursor-pointer">
+                <div className="w-full aspect-[4/3] rounded-md overflow-hidden bg-[#FAF5E8]">
+                  <GameThumbnail src={recommendedGame.thumbnailUrl} alt="" title={recommendedGame.title} compact loading={index < 3 ? 'eager' : 'lazy'} imgClassName="w-full h-full object-cover" />
+                </div>
+                <span className="w-full text-[9px] sm:text-[10px] font-bold text-[#2B3445] leading-tight text-center line-clamp-2">{recommendedGame.title}</span>
+              </button>
+            ))}
           </aside>
         )}
       </div>
 
-      {/* Separate Scrollable Game Information Section (only renders non-empty admin-provided sections) */}
-      {hasAnyInfo && (
-        <div className="mt-6 sm:mt-8 w-full sm:max-w-[min(100%,calc(82dvh*16/9))] mx-auto">
-          <div className="rounded-[24px] sm:rounded-[32px] bg-white/96 border-2 border-[#CBE7FA] p-5 sm:p-8 bubble-shadow space-y-6">
-            <div className="border-b border-[#EAE3CE] pb-4">
-              <h3 className="font-display text-2xl sm:text-3xl font-bold text-[#2B3445] break-words">
-                About {game.title}
-              </h3>
-            </div>
-
-            {descriptionText && (
-              <div className="space-y-2">
-                <h4 className="font-display text-lg sm:text-xl font-bold text-[#2B3445] flex items-center gap-2">
-                  <BookOpen className="w-5 h-5 text-[#1E5B8A] shrink-0" aria-hidden="true" />
-                  <span>Description</span>
-                </h4>
-                <p className="text-sm sm:text-base text-[#5A657A] leading-relaxed whitespace-pre-line break-words">
-                  {descriptionText}
-                </p>
-              </div>
-            )}
-
-            {(howToPlayText || objectiveText) && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
-                {howToPlayText && (
-                  <div className="rounded-2xl bg-[#D8F3E5]/45 border border-[#BFEAD6] p-4 sm:p-5 space-y-2">
-                    <h4 className="font-display text-lg font-bold text-[#1D6B52]">How to Play</h4>
-                    <p className="text-sm sm:text-base text-[#2B3445] leading-relaxed whitespace-pre-line break-words">
-                      {howToPlayText}
-                    </p>
-                  </div>
-                )}
-
-                {objectiveText && (
-                  <div className="rounded-2xl bg-[#DDF0FC]/55 border border-[#CBE7FA] p-4 sm:p-5 space-y-2">
-                    <h4 className="font-display text-lg font-bold text-[#1E5B8A] flex items-center gap-2">
-                      <Target className="w-4 h-4 shrink-0" aria-hidden="true" />
-                      <span>Game Objective</span>
-                    </h4>
-                    <p className="text-sm sm:text-base text-[#2B3445] leading-relaxed whitespace-pre-line break-words">
-                      {objectiveText}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {hasControls && (
-              <div className="space-y-3">
-                <h4 className="font-display text-lg sm:text-xl font-bold text-[#2B3445]">
-                  Controls
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {keyboardControlsText && (
-                    <div className="rounded-2xl bg-[#FAF5E8] border border-[#EAE3CE] p-4 space-y-1.5">
-                      <h5 className="font-display text-base font-bold text-[#2B3445] flex items-center gap-2">
-                        <Keyboard className="w-4 h-4 text-[#4B3D8F] shrink-0" aria-hidden="true" />
-                        <span>Keyboard Controls</span>
-                      </h5>
-                      <p className="text-sm text-[#5A657A] leading-relaxed whitespace-pre-line break-words">
-                        {keyboardControlsText}
-                      </p>
-                    </div>
-                  )}
-
-                  {mouseControlsText && (
-                    <div className="rounded-2xl bg-[#FAF5E8] border border-[#EAE3CE] p-4 space-y-1.5">
-                      <h5 className="font-display text-base font-bold text-[#2B3445] flex items-center gap-2">
-                        <Mouse className="w-4 h-4 text-[#1E5B8A] shrink-0" aria-hidden="true" />
-                        <span>Mouse Controls</span>
-                      </h5>
-                      <p className="text-sm text-[#5A657A] leading-relaxed whitespace-pre-line break-words">
-                        {mouseControlsText}
-                      </p>
-                    </div>
-                  )}
-
-                  {touchControlsText && (
-                    <div className="rounded-2xl bg-[#FAF5E8] border border-[#EAE3CE] p-4 space-y-1.5">
-                      <h5 className="font-display text-base font-bold text-[#2B3445] flex items-center gap-2">
-                        <Smartphone className="w-4 h-4 text-[#1D6B52] shrink-0" aria-hidden="true" />
-                        <span>Mobile Touch Controls</span>
-                      </h5>
-                      <p className="text-sm text-[#5A657A] leading-relaxed whitespace-pre-line break-words">
-                        {touchControlsText}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {tipsText && (
-              <div className="rounded-2xl bg-[#EAE5FA]/60 border border-[#DFD7F8] p-4 sm:p-5 space-y-2">
-                <h4 className="font-display text-lg font-bold text-[#4B3D8F] flex items-center gap-2">
-                  <Lightbulb className="w-4 h-4 shrink-0" aria-hidden="true" />
-                  <span>Useful Tips</span>
-                </h4>
-                <p className="text-sm sm:text-base text-[#2B3445] leading-relaxed whitespace-pre-line break-words">
-                  {tipsText}
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {/* Game information is intentionally not shown over the fixed gameplay viewport. */}
     </section>
   );
 }
