@@ -25,7 +25,7 @@ export function getStoredConsent(): AnalyticsConsentChoice | null {
 }
 
 export function hasAnalyticsTrackingAllowed(): boolean {
-  return getStoredConsent() !== 'rejected';
+  return getStoredConsent() === 'accepted';
 }
 
 function clearGoogleAnalyticsCookies(): void {
@@ -52,6 +52,45 @@ function clearGoogleAnalyticsCookies(): void {
   }
 }
 
+function loadGoogleAnalyticsAfterConsent(): void {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return;
+
+  const existingScript = document.querySelector<HTMLScriptElement>(
+    'script[data-playaura-ga4="true"]'
+  );
+
+  if (!existingScript) {
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = (...args: unknown[]) => {
+      window.dataLayer?.push(args);
+    };
+
+    // Establish privacy-safe defaults before Google Analytics is loaded.
+    window.gtag('consent', 'default', {
+      analytics_storage: 'denied',
+      ad_storage: 'denied',
+      ad_user_data: 'denied',
+      ad_personalization: 'denied',
+    });
+    window.gtag('js', new Date());
+    window.gtag('config', GA4_MEASUREMENT_ID);
+
+    const script = document.createElement('script');
+    script.async = true;
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(GA4_MEASUREMENT_ID)}`;
+    script.crossOrigin = 'anonymous';
+    script.setAttribute('data-playaura-ga4', 'true');
+    document.head.appendChild(script);
+  }
+
+  window.gtag?.('consent', 'update', {
+    analytics_storage: 'granted',
+    ad_storage: 'denied',
+    ad_user_data: 'denied',
+    ad_personalization: 'denied',
+  });
+}
+
 function applyConsentChoice(choice: AnalyticsConsentChoice): void {
   if (typeof window === 'undefined') return;
   const disableKey = `ga-disable-${GA4_MEASUREMENT_ID}` as const;
@@ -71,11 +110,7 @@ function applyConsentChoice(choice: AnalyticsConsentChoice): void {
   }
 
   window[disableKey] = false;
-  if (typeof window.gtag === 'function') {
-    window.gtag('consent', 'update', {
-      analytics_storage: 'granted',
-    });
-  }
+  loadGoogleAnalyticsAfterConsent();
 }
 
 export function applyStoredConsentOnLoad(): AnalyticsConsentChoice | null {
