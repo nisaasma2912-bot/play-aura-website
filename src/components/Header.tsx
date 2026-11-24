@@ -36,7 +36,7 @@ export function Header({
             height={1024}
             decoding="async"
             fetchPriority="high"
-            className="block w-[76px] h-[52px] sm:w-[100px] sm:h-[66px] object-contain object-center shrink-0 select-none"
+            className="block w-[90px] h-[60px] sm:w-[108px] sm:h-[72px] object-contain object-center shrink-0 select-none"
           />
           {activeView === 'home' ? (
             <h1 className="font-display text-lg sm:text-2xl font-bold tracking-tight leading-none text-[#2B3445]">
