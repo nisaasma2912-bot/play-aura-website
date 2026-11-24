@@ -39,7 +39,7 @@ export function FloatingSocialButtons({
         onClick={handleNotificationsClick}
         aria-label={bellAriaLabel}
         title={bellAriaLabel}
-        className="relative inline-flex items-center justify-center rounded-xl p-0.5 w-12 h-12 sm:w-14 sm:h-14 hover:scale-105 active:scale-95 transition-transform duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[#8AD8B5]"
+        className="relative inline-flex items-center justify-center rounded-xl w-12 h-12 sm:w-14 sm:h-14 hover:scale-105 active:scale-95 transition-transform duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[#8AD8B5]"
       >
         <img
           src={NOTIFICATION_BELL_CUSTOM_ICON_SRC}
@@ -47,12 +47,12 @@ export function FloatingSocialButtons({
           width={1080}
           height={1057}
           decoding="async"
-          className="w-10 h-10 sm:w-12 sm:h-12 object-contain object-center select-none"
+          className="block w-11 h-11 sm:w-[52px] sm:h-[52px] object-contain object-center shrink-0 select-none"
         />
         {hasUnreadNotifications && (
           <span
             aria-hidden="true"
-            className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-[#EF4444] ring-2 ring-white shadow-sm pointer-events-none"
+            className="absolute top-0.5 right-0.5 w-2.5 h-2.5 rounded-full bg-[#EF4444] ring-2 ring-white shadow-sm pointer-events-none"
           />
         )}
       </button>
@@ -62,7 +62,7 @@ export function FloatingSocialButtons({
         onClick={handleSuggestionClick}
         aria-label="Suggest a game"
         title="Suggest a game"
-        className="inline-flex items-center justify-center rounded-xl p-0.5 w-12 h-12 sm:w-14 sm:h-14 hover:scale-105 active:scale-95 transition-transform duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[#8AD8B5]"
+        className="inline-flex items-center justify-center rounded-xl w-12 h-12 sm:w-14 sm:h-14 hover:scale-105 active:scale-95 transition-transform duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[#8AD8B5]"
       >
         <img
           src={SUGGESTION_CUSTOM_ICON_SRC}
@@ -70,7 +70,7 @@ export function FloatingSocialButtons({
           width={1293}
           height={1217}
           decoding="async"
-          className="w-10 h-10 sm:w-12 sm:h-12 object-contain object-center select-none"
+          className="block w-10 h-10 sm:w-12 sm:h-12 object-contain object-center shrink-0 select-none"
         />
       </button>
 
@@ -80,7 +80,7 @@ export function FloatingSocialButtons({
         rel="noopener noreferrer"
         aria-label="Visit Play Aura on YouTube"
         title="Visit Play Aura on YouTube"
-        className="inline-flex items-center justify-center rounded-xl p-0.5 w-12 h-12 sm:w-14 sm:h-14 hover:scale-105 active:scale-95 transition-transform duration-150 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[#8AC5F0]"
+        className="inline-flex items-center justify-center rounded-xl w-12 h-12 sm:w-14 sm:h-14 hover:scale-105 active:scale-95 transition-transform duration-150 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[#8AC5F0]"
       >
         <img
           src={YOUTUBE_CUSTOM_ICON_SRC}
@@ -88,7 +88,7 @@ export function FloatingSocialButtons({
           width={1536}
           height={1024}
           decoding="async"
-          className="w-11 h-9 sm:w-[54px] sm:h-10 object-contain object-center select-none"
+          className="block w-11 h-9 sm:w-[54px] sm:h-10 object-contain object-center shrink-0 select-none"
         />
       </a>
     </div>
