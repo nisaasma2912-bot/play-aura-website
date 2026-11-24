@@ -30,16 +30,12 @@ export function GameCard({ game, index, onPlay }: GameCardProps) {
   const theme = ACCENT_CYCLE[index % ACCENT_CYCLE.length];
 
   return (
-    <article
-      onClick={() => onPlay(game)}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onPlay(game);
-        }
+    <a
+      href={`/games/${encodeURIComponent(game.slug)}`}
+      onClick={(event) => {
+        event.preventDefault();
+        onPlay(game);
       }}
-      tabIndex={0}
-      role="button"
       aria-label={`Play ${game.title}`}
       className={`group rounded-[28px] bg-white border-2 ${theme.cardBorder} p-4 flex flex-col gap-3.5 bubble-shadow hover:bubble-shadow-hover hover:-translate-y-1 transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#CBE7FA]`}
     >
@@ -61,18 +57,13 @@ export function GameCard({ game, index, onPlay }: GameCardProps) {
           {game.title}
         </h2>
 
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onPlay(game);
-          }}
-          className={`bubble-button w-full rounded-full py-2.5 px-5 font-bold text-sm inline-flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer ${theme.playBg}`}
+        <span
+          className={`bubble-button w-full rounded-full py-2.5 px-5 font-bold text-sm inline-flex items-center justify-center gap-2 whitespace-nowrap ${theme.playBg}`}
         >
           <Play className="w-4 h-4 fill-current" aria-hidden="true" />
           <span>Play Now</span>
-        </button>
+        </span>
       </div>
-    </article>
+    </a>
   );
 }
