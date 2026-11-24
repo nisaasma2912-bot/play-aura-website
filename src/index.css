@@ -73,3 +73,59 @@
     aspect-ratio: 16 / 9;
   }
 }
+
+
+/* Immersive landscape gameplay on phones: no toolbar, side cards, or description. */
+@media (orientation: landscape) and (max-height: 600px) and (max-width: 950px) {
+  .game-player-section {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 100 !important;
+    width: 100vw !important;
+    max-width: none !important;
+    height: 100dvh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    background: #000 !important;
+  }
+  .game-player-toolbar,
+  .game-player-information,
+  .game-player-section .mobile-landscape-hide,
+  .game-player-section aside {
+    display: none !important;
+  }
+  .game-player-layout {
+    display: block !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .game-player-layout > div {
+    width: 100vw !important;
+    height: 100dvh !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .game-player-stage {
+    width: 100vw !important;
+    max-width: none !important;
+    height: 100dvh !important;
+    min-height: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+  .game-player-viewport {
+    width: 100% !important;
+    max-width: none !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    flex: 1 1 auto !important;
+    aspect-ratio: auto !important;
+    margin: 0 !important;
+  }
+}
