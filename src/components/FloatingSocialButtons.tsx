@@ -64,7 +64,7 @@ export function FloatingSocialButtons({
           width={1080}
           height={1057}
           decoding="async"
-          className={imageClass}
+          className="block w-10 h-10 object-contain object-center shrink-0 select-none"
         />
 
         {hasUnreadNotifications && (
@@ -108,7 +108,7 @@ export function FloatingSocialButtons({
           width={1536}
           height={1024}
           decoding="async"
-          className={imageClass}
+          className="block w-[52px] h-[52px] object-contain object-center shrink-0 select-none"
         />
       </a>
     </div>
