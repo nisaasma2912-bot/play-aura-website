@@ -89,7 +89,7 @@ export function FloatingSocialButtons({
           width={1293}
           height={1217}
           decoding="async"
-          className={imageClass}
+          className="block w-9 h-9 sm:w-14 sm:h-14 object-contain object-center shrink-0 select-none"
         />
       </button>
 
@@ -108,7 +108,7 @@ export function FloatingSocialButtons({
           width={1536}
           height={1024}
           decoding="async"
-          className="block w-8 h-8 sm:w-[52px] sm:h-[52px] object-contain object-center shrink-0 select-none"
+          className="block w-9 h-9 sm:w-14 sm:h-14 object-contain object-center shrink-0 select-none"
         />
       </a>
     </div>
