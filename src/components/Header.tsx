@@ -32,11 +32,9 @@ export function Header({
           <img
             src={LOGO_SRC}
             alt="Play Aura controller logo"
-            width={1536}
-            height={1024}
             decoding="async"
             fetchPriority="high"
-            className="block w-[90px] h-[60px] sm:w-[108px] sm:h-[72px] object-contain object-center shrink-0 select-none"
+            className="block h-[58px] sm:h-[66px] w-auto max-w-[124px] object-contain object-center shrink-0 select-none"
           />
           {activeView === 'home' ? (
             <h1 className="font-display text-lg sm:text-2xl font-bold tracking-tight leading-none text-[#2B3445]">
