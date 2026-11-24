@@ -33,25 +33,21 @@ export function FloatingSocialButtons({
   const bellAriaLabel = hasUnreadNotifications ? 'Notifications (unread)' : 'Notifications';
 
   return (
-    <div
-      aria-label="Community actions"
-      className="flex items-center gap-1.5 sm:gap-2.5 shrink-0"
-    >
-      {/* Notification Bell Button: transparent 3D golden bell + plain red unread dot */}
+    <div aria-label="Community actions" className="flex items-center justify-end gap-2 sm:gap-3 shrink-0">
       <button
         type="button"
         onClick={handleNotificationsClick}
         aria-label={bellAriaLabel}
         title={bellAriaLabel}
-        className="relative inline-flex items-center justify-center rounded-xl p-1 min-w-[44px] min-h-[44px] hover:scale-105 active:scale-95 transition-transform duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[#8AD8B5]"
+        className="relative inline-flex items-center justify-center rounded-xl p-0.5 w-12 h-12 sm:w-14 sm:h-14 hover:scale-105 active:scale-95 transition-transform duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[#8AD8B5]"
       >
         <img
           src={NOTIFICATION_BELL_CUSTOM_ICON_SRC}
-          alt="Notifications"
-          width={1311}
-          height={1200}
+          alt=""
+          width={1080}
+          height={1057}
           decoding="async"
-          className="w-9 h-9 sm:w-10 sm:h-10 object-contain drop-shadow-[0_4px_8px_rgba(30,91,138,0.18)] select-none"
+          className="w-10 h-10 sm:w-12 sm:h-12 object-contain object-center select-none"
         />
         {hasUnreadNotifications && (
           <span
@@ -61,40 +57,38 @@ export function FloatingSocialButtons({
         )}
       </button>
 
-      {/* Button A: Custom Glossy Suggestion Icon (no text label) */}
       <button
         type="button"
         onClick={handleSuggestionClick}
         aria-label="Suggest a game"
         title="Suggest a game"
-        className="inline-flex items-center justify-center rounded-xl p-0.5 min-w-[44px] min-h-[44px] sm:min-w-[48px] sm:min-h-[48px] hover:scale-105 active:scale-95 transition-transform duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[#8AD8B5]"
+        className="inline-flex items-center justify-center rounded-xl p-0.5 w-12 h-12 sm:w-14 sm:h-14 hover:scale-105 active:scale-95 transition-transform duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[#8AD8B5]"
       >
         <img
           src={SUGGESTION_CUSTOM_ICON_SRC}
-          alt="Suggest a game"
+          alt=""
           width={1293}
           height={1217}
           decoding="async"
-          className="w-11 h-11 sm:w-[54px] sm:h-[54px] object-contain drop-shadow-[0_4px_8px_rgba(30,91,138,0.18)] select-none"
+          className="w-10 h-10 sm:w-12 sm:h-12 object-contain object-center select-none"
         />
       </button>
 
-      {/* Button B: Custom Blue Glossy Play-button PNG -> YouTube Channel */}
       <a
         href={YOUTUBE_CHANNEL_URL}
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Visit Play Aura on YouTube"
         title="Visit Play Aura on YouTube"
-        className="inline-flex items-center justify-center rounded-xl p-0.5 min-w-[44px] min-h-[44px] sm:min-w-[48px] hover:scale-105 active:scale-95 transition-transform duration-150 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[#8AC5F0]"
+        className="inline-flex items-center justify-center rounded-xl p-0.5 w-12 h-12 sm:w-14 sm:h-14 hover:scale-105 active:scale-95 transition-transform duration-150 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[#8AC5F0]"
       >
         <img
           src={YOUTUBE_CUSTOM_ICON_SRC}
-          alt="Visit Play Aura on YouTube"
+          alt=""
           width={1536}
           height={1024}
           decoding="async"
-          className="w-[54px] h-[36px] sm:w-[69px] sm:h-[46px] object-contain drop-shadow-[0_4px_8px_rgba(30,91,138,0.18)] select-none"
+          className="w-11 h-9 sm:w-[54px] sm:h-10 object-contain object-center select-none"
         />
       </a>
     </div>
