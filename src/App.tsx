@@ -559,7 +559,7 @@ export default function App() {
               {/* Published Games Grid / Friendly Empty State */}
               <section
                 aria-label="Published games"
-                className="w-full mx-auto px-4 sm:px-6 lg:px-8 pt-2 pb-12"
+                className="w-full mx-auto px-2 sm:px-6 lg:px-8 pt-2 pb-12"
               >
                 {loadingGames ? (
                   <div className="max-w-md mx-auto rounded-[32px] bg-white/95 backdrop-blur-sm border-2 border-[#CBE7FA] p-10 text-center bubble-shadow space-y-3 my-6">
@@ -621,7 +621,7 @@ export default function App() {
                     </button>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <div className="grid grid-cols-4 gap-2 sm:gap-4 lg:gap-6">
                     {filteredGames.map((game, idx) => (
                       <GameCard
                         key={game.id}
