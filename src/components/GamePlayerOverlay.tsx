@@ -244,7 +244,7 @@ export function GamePlayerOverlay({
       className="w-full max-w-[1440px] mx-auto px-1 sm:px-4 lg:px-6 pt-2 sm:pt-5 pb-8 sm:pb-10"
     >
       {/* Player Control Bar */}
-      <div className="w-full sm:max-w-[min(100%,calc(82dvh*16/9))] mx-auto flex flex-wrap items-center justify-between gap-1.5 sm:gap-4 mb-2 sm:mb-4 bg-white/95 border-2 border-[#CBE7FA] rounded-2xl sm:rounded-full px-2 sm:px-5 py-1.5 sm:py-2 bubble-shadow">
+      <div className="w-full sm:max-w-[min(100%,calc(82dvh*16/9))] mx-auto flex flex-nowrap items-center justify-between gap-1 sm:gap-4 mb-2 sm:mb-4 bg-white/95 border-2 border-[#CBE7FA] rounded-2xl sm:rounded-full px-1.5 sm:px-5 py-1.5 sm:py-2 bubble-shadow">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <button
             type="button"
@@ -252,7 +252,7 @@ export function GamePlayerOverlay({
             className="bubble-button inline-flex items-center gap-1.5 rounded-full bg-[#FAF5E8] hover:bg-[#D8F3E5] text-[#2B3445] hover:text-[#1D6B52] px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-xs sm:text-sm font-bold whitespace-nowrap shrink-0 cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" aria-hidden="true" />
-            <span>Back</span>
+            <span className="hidden landscape:inline sm:inline">Back</span>
           </button>
           <div className="min-w-0">
             <h2 className="hidden sm:block font-display text-base sm:text-xl font-bold text-[#2B3445] truncate">
@@ -269,7 +269,7 @@ export function GamePlayerOverlay({
             className="bubble-button inline-flex items-center gap-1.5 rounded-full bg-[#EAE5FA] hover:bg-[#DFD7F8] text-[#4B3D8F] px-2 sm:px-3.5 py-1.5 sm:py-2 text-xs sm:text-sm font-bold whitespace-nowrap cursor-pointer"
           >
             <RotateCcw className="w-4 h-4" aria-hidden="true" />
-            <span className="hidden sm:inline">Restart</span>
+            <span className="hidden landscape:inline sm:inline">Restart</span>
           </button>
 
           <button
@@ -283,7 +283,7 @@ export function GamePlayerOverlay({
             ) : (
               <Maximize2 className="w-4 h-4" aria-hidden="true" />
             )}
-            <span className="hidden sm:inline">{activeMax ? 'Exit Fullscreen' : 'Fullscreen'}</span>
+            <span className="hidden landscape:inline sm:inline">{activeMax ? 'Exit Fullscreen' : 'Fullscreen'}</span>
           </button>
 
           <button
