@@ -94,10 +94,7 @@ export default defineConfig(() => {
       {
         name: 'copy-unbundled-src-assets',
         apply: 'build',
-        closeBundle(error?: Error): void {
-          if (error) {
-            return;
-          }
+        writeBundle(): void {
           const srcAssets = path.resolve(projectRoot, 'src/assets');
           const distAssets = path.resolve(distDir, 'src/assets');
           if (fs.existsSync(distDir) && fs.existsSync(srcAssets)) {
@@ -109,11 +106,7 @@ export default defineConfig(() => {
       {
         name: 'ensure-public-static-files',
         apply: 'build',
-        closeBundle(error?: Error): void {
-          if (error) {
-            return;
-          }
-
+        writeBundle(): void {
           if (!fs.existsSync(distDir)) {
             throw new Error(`Build verification failed: dist directory not found at ${distDir}`);
           }
