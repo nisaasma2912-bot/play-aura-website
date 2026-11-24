@@ -61,3 +61,14 @@
     scroll-behavior: auto !important;
   }
 }
+
+
+/* Compact phones in landscape must keep the game as the only main content. */
+@media (orientation: landscape) and (max-height: 600px) {
+  .mobile-landscape-hide { display: none !important; }
+  .game-viewport-frame {
+    width: min(100%, calc((100dvh - 112px) * 16 / 9));
+    max-width: 100%;
+    aspect-ratio: 16 / 9;
+  }
+}
