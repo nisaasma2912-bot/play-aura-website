@@ -15,9 +15,12 @@ import {
   X,
 } from 'lucide-react';
 import type { GameRecord } from '../types/game';
+import { GameThumbnail } from './GameThumbnail';
 
 interface GamePlayerOverlayProps {
   game: GameRecord;
+  recommendations: GameRecord[];
+  onPlayRecommendation: (game: GameRecord) => void;
   onClose: () => void;
 }
 
@@ -52,7 +55,12 @@ function injectBaseHref(html: string, baseDirUrl: string): string {
   return `<head>${headInjection}</head>\n${html}`;
 }
 
-export function GamePlayerOverlay({ game, onClose }: GamePlayerOverlayProps) {
+export function GamePlayerOverlay({
+  game,
+  recommendations,
+  onPlayRecommendation,
+  onClose,
+}: GamePlayerOverlayProps) {
   const stageRef = useRef<HTMLDivElement>(null);
   const closedOnceRef = useRef(false);
   const [reloadKey, setReloadKey] = useState(0);
@@ -222,6 +230,7 @@ export function GamePlayerOverlay({ game, onClose }: GamePlayerOverlayProps) {
   const mouseControlsText = game.mouseControls?.trim() || '';
   const touchControlsText = game.touchControls?.trim() || '';
   const tipsText = game.tips?.trim() || '';
+  const recommendedGames = recommendations.filter((item) => item.id !== game.id).slice(0, 6);
 
   const hasControls = Boolean(keyboardControlsText || mouseControlsText || touchControlsText);
   const hasAnyInfo = Boolean(
@@ -287,62 +296,100 @@ export function GamePlayerOverlay({ game, onClose }: GamePlayerOverlayProps) {
         </div>
       </div>
 
-      {/* Game Viewport Stage — iframe never remounts on fullscreen or resize to preserve game state */}
-      <div
-        ref={stageRef}
-        className={
-          isExpandedFallback
-            ? 'fixed inset-1 sm:inset-2 z-50 rounded-[20px] sm:rounded-[24px] bg-[#FFFDF6] border-3 sm:border-4 border-[#BFEAD6] overflow-hidden flex flex-col bubble-shadow'
-            : isFullscreen
-              ? 'w-screen h-screen bg-[#FFFDF6] overflow-hidden flex flex-col'
-              : 'w-full sm:max-w-[min(100%,calc(82dvh*16/9))] mx-auto rounded-[20px] sm:rounded-[28px] bg-[#FFFDF6] border-2 sm:border-3 border-[#CBE7FA] overflow-hidden bubble-shadow flex flex-col'
-        }
-      >
-        {activeMax && (
-          <div className="flex items-center justify-between px-4 py-2 bg-[#FFFDF6] border-b border-[#EAE3CE] shrink-0">
-            <span className="font-display font-bold text-[#2B3445] truncate pr-3">{game.title}</span>
-            <button
-              type="button"
-              onClick={toggleFullscreen}
-              className="rounded-full bg-[#D8F3E5] hover:bg-[#BFEAD6] text-[#1D6B52] px-3.5 py-1.5 text-xs font-bold whitespace-nowrap cursor-pointer"
-            >
-              Exit Fullscreen
-            </button>
-          </div>
-        )}
-
+      {/* Game stage with compact related-game recommendations */}
+      <div className="w-full max-w-[1440px] mx-auto flex flex-col lg:flex-row items-start gap-3 lg:gap-4">
         <div
+          ref={stageRef}
           className={
-            activeMax
-              ? 'w-full flex-1 min-h-0 bg-[#FFFDF6] relative'
-              : 'w-full h-[62dvh] min-h-[360px] max-h-[560px] sm:h-auto sm:min-h-[420px] sm:max-h-none sm:aspect-video bg-[#FFFDF6] relative'
+            isExpandedFallback
+              ? 'fixed inset-1 sm:inset-2 z-50 rounded-[20px] sm:rounded-[24px] bg-[#FFFDF6] border-3 sm:border-4 border-[#BFEAD6] overflow-hidden flex flex-col bubble-shadow'
+              : isFullscreen
+                ? 'w-screen h-screen bg-[#FFFDF6] overflow-hidden flex flex-col'
+                : 'w-full lg:flex-1 lg:min-w-0 rounded-[20px] sm:rounded-[28px] bg-[#FFFDF6] border-2 sm:border-3 border-[#CBE7FA] overflow-hidden bubble-shadow flex flex-col'
           }
         >
-          {loadingEntry ? (
-            <div className="w-full h-full flex flex-col items-center justify-center gap-3 text-sm font-bold text-[#1E5B8A]">
-              <Loader2 className="w-7 h-7 animate-spin" aria-hidden="true" />
-              <span>Loading game files...</span>
+          {activeMax && (
+            <div className="flex items-center justify-between px-4 py-2 bg-[#FFFDF6] border-b border-[#EAE3CE] shrink-0">
+              <span className="font-display font-bold text-[#2B3445] truncate pr-3">{game.title}</span>
+              <button
+                type="button"
+                onClick={toggleFullscreen}
+                className="rounded-full bg-[#D8F3E5] hover:bg-[#BFEAD6] text-[#1D6B52] px-3.5 py-1.5 text-xs font-bold whitespace-nowrap cursor-pointer"
+              >
+                Exit Fullscreen
+              </button>
             </div>
-          ) : entryError ? (
-            <div className="w-full h-full flex flex-col items-center justify-center gap-3 p-6 text-center">
-              <AlertCircle className="w-8 h-8 text-[#4B3D8F]" aria-hidden="true" />
-              <p className="font-display text-lg font-bold text-[#2B3445]">
-                Unable to start game
-              </p>
-              <p className="text-sm text-[#5A657A] max-w-md">{entryError}</p>
-            </div>
-          ) : (
-            <iframe
-              key={`${game.id}-${reloadKey}`}
-              src={resolvedSrcDoc ? undefined : resolvedSrcUrl}
-              srcDoc={resolvedSrcDoc}
-              title={game.title}
-              sandbox="allow-scripts allow-same-origin allow-pointer-lock"
-              allow="fullscreen"
-              className="w-full h-full border-0 block"
-            />
           )}
+
+          <div
+            className={
+              activeMax
+                ? 'w-full flex-1 min-h-0 bg-[#FFFDF6] relative'
+                : 'w-full h-[62dvh] min-h-[360px] max-h-[560px] sm:h-auto sm:min-h-[420px] sm:max-h-[560px] sm:aspect-video bg-[#FFFDF6] relative'
+            }
+          >
+            {loadingEntry ? (
+              <div className="w-full h-full flex flex-col items-center justify-center gap-3 text-sm font-bold text-[#1E5B8A]">
+                <Loader2 className="w-7 h-7 animate-spin" aria-hidden="true" />
+                <span>Loading game files...</span>
+              </div>
+            ) : entryError ? (
+              <div className="w-full h-full flex flex-col items-center justify-center gap-3 p-6 text-center">
+                <AlertCircle className="w-8 h-8 text-[#4B3D8F]" aria-hidden="true" />
+                <p className="font-display text-lg font-bold text-[#2B3445]">
+                  Unable to start game
+                </p>
+                <p className="text-sm text-[#5A657A] max-w-md">{entryError}</p>
+              </div>
+            ) : (
+              <iframe
+                key={`${game.id}-${reloadKey}`}
+                src={resolvedSrcDoc ? undefined : resolvedSrcUrl}
+                srcDoc={resolvedSrcDoc}
+                title={game.title}
+                sandbox="allow-scripts allow-same-origin allow-pointer-lock"
+                allow="fullscreen"
+                className="w-full h-full border-0 block"
+              />
+            )}
+          </div>
         </div>
+
+        {!activeMax && recommendedGames.length > 0 && (
+          <aside
+            aria-label="Recommended games"
+            className="w-full lg:w-[224px] lg:shrink-0 rounded-[22px] border-2 border-[#CBE7FA] bg-white/95 p-3 bubble-shadow"
+          >
+            <h3 className="font-display text-base font-bold text-[#2B3445] mb-2.5">
+              More Games
+            </h3>
+            <div className="flex lg:flex-col gap-2.5 overflow-x-auto lg:overflow-visible pb-1 lg:pb-0">
+              {recommendedGames.map((recommendedGame, index) => (
+                <button
+                  key={recommendedGame.id}
+                  type="button"
+                  onClick={() => onPlayRecommendation(recommendedGame)}
+                  className="group flex items-center gap-2.5 text-left rounded-xl border border-[#DDF0FC] bg-[#FFFDF6] hover:bg-[#EAF7FF] hover:border-[#8AC5F0] p-1.5 transition-colors cursor-pointer min-w-[178px] lg:min-w-0 lg:w-full"
+                  aria-label={`Play ${recommendedGame.title}`}
+                >
+                  <div className="w-[68px] h-[51px] rounded-lg overflow-hidden bg-[#FAF5E8] shrink-0">
+                    <GameThumbnail
+                      src={recommendedGame.thumbnailUrl}
+                      alt=""
+                      title={recommendedGame.title}
+                      compact
+                      loading={index < 3 ? 'eager' : 'lazy'}
+                      imgClassName="w-full h-full object-cover"
+                    />
+                  </div>
+                  <span className="min-w-0 font-display text-xs sm:text-sm font-bold text-[#2B3445] leading-snug line-clamp-2 group-hover:text-[#1E5B8A]">
+                    {recommendedGame.title}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </aside>
+        )}
       </div>
 
       {/* Separate Scrollable Game Information Section (only renders non-empty admin-provided sections) */}
