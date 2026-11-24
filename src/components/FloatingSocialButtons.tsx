@@ -40,15 +40,15 @@ export function FloatingSocialButtons({
     : 'Notifications';
 
   const buttonClass =
-    'relative inline-flex items-center justify-center w-14 h-14 shrink-0 rounded-xl hover:scale-105 active:scale-95 transition-transform duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[#8AD8B5]';
+    'relative inline-flex items-center justify-center w-9 h-9 sm:w-14 sm:h-14 shrink-0 rounded-lg sm:rounded-xl hover:scale-105 active:scale-95 transition-transform duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[#8AD8B5]';
 
   const imageClass =
-    'block w-12 h-12 object-contain object-center shrink-0 select-none';
+    'block w-7 h-7 sm:w-12 sm:h-12 object-contain object-center shrink-0 select-none';
 
   return (
     <div
       aria-label="Community actions"
-      className="flex items-center justify-end gap-3 shrink-0"
+      className="flex items-center justify-end gap-1 sm:gap-3 shrink-0"
     >
       {/* Notification Bell */}
       <button
@@ -64,7 +64,7 @@ export function FloatingSocialButtons({
           width={1080}
           height={1057}
           decoding="async"
-          className="block w-10 h-10 object-contain object-center shrink-0 select-none"
+          className="block w-7 h-7 sm:w-10 sm:h-10 object-contain object-center shrink-0 select-none"
         />
 
         {hasUnreadNotifications && (
@@ -108,7 +108,7 @@ export function FloatingSocialButtons({
           width={1536}
           height={1024}
           decoding="async"
-          className="block w-[52px] h-[52px] object-contain object-center shrink-0 select-none"
+          className="block w-8 h-8 sm:w-[52px] sm:h-[52px] object-contain object-center shrink-0 select-none"
         />
       </a>
     </div>
