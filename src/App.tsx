@@ -490,6 +490,8 @@ export default function App() {
         {activeGame && (
           <GamePlayerOverlay
             game={activeGame}
+            recommendations={publishedGames}
+            onPlayRecommendation={handleOpenGame}
             onClose={handleCloseGame}
           />
         )}
