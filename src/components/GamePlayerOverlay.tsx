@@ -298,7 +298,7 @@ export function GamePlayerOverlay({
       </div>
 
       {/* Game viewport with compact recommendations on both sides */}
-      <div className="w-full max-w-[1600px] mx-auto grid grid-cols-1 sm:grid-cols-[clamp(52px,6vw,88px)_minmax(0,1fr)_clamp(52px,6vw,88px)] gap-1.5 sm:gap-2.5 items-start">
+      <div className="game-player-layout w-full max-w-[1600px] mx-auto grid grid-cols-1 sm:grid-cols-[clamp(52px,6vw,88px)_minmax(0,1fr)_clamp(52px,6vw,88px)] gap-1.5 sm:gap-2.5 items-start">
         <aside aria-label="Recommended games left" className="mobile-landscape-hide hidden sm:flex flex-col items-center gap-2 sm:gap-3 pt-1">
           {recommendationGames.map((item, index) => (
             <button key={'left-' + item.id} type="button" onClick={() => onPlayRecommendation(item)} title={item.title} aria-label={'Play ' + item.title} className="w-full min-w-0 rounded-lg sm:rounded-xl border border-[#CBE7FA] bg-white p-1 sm:p-1.5 flex flex-col items-center gap-1 hover:bg-[#EAF7FF] cursor-pointer">
@@ -367,7 +367,7 @@ export function GamePlayerOverlay({
           </div>
         </div>
         </div>
-        <aside aria-label="Recommended games right" className="hidden sm:flex flex-col items-center gap-2 sm:gap-3 pt-1">
+        <aside aria-label="Recommended games right" className="mobile-landscape-hide hidden sm:flex flex-col items-center gap-2 sm:gap-3 pt-1">
           {recommendationGames.map((item, index) => (
             <button key={'right-' + item.id} type="button" onClick={() => onPlayRecommendation(item)} title={item.title} aria-label={'Play ' + item.title} className="w-full min-w-0 rounded-lg sm:rounded-xl border border-[#CBE7FA] bg-white p-1 sm:p-1.5 flex flex-col items-center gap-1 hover:bg-[#EAF7FF] cursor-pointer">
               <div className="w-full aspect-[4/3] overflow-hidden rounded-md bg-[#FAF5E8]">
