@@ -37,10 +37,10 @@ export function GameCard({ game, index, onPlay }: GameCardProps) {
         onPlay(game);
       }}
       aria-label={`Play ${game.title}`}
-      className={`group rounded-[28px] bg-white border-2 ${theme.cardBorder} p-4 flex flex-col gap-3.5 bubble-shadow hover:bubble-shadow-hover hover:-translate-y-1 transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#CBE7FA]`}
+      className={`group rounded-xl sm:rounded-[28px] bg-white border-2 ${theme.cardBorder} p-1.5 sm:p-4 flex flex-col gap-1.5 sm:gap-3.5 bubble-shadow hover:bubble-shadow-hover hover:-translate-y-1 transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#CBE7FA]`}
     >
       {/* Thumbnail */}
-      <div className="relative w-full aspect-[4/3] rounded-[20px] overflow-hidden bg-[#FAF5E8]">
+      <div className="relative w-full aspect-[4/3] rounded-lg sm:rounded-[20px] overflow-hidden bg-[#FAF5E8]">
         <GameThumbnail
           src={game.thumbnailUrl}
           alt={`${game.title} game thumbnail`}
@@ -52,16 +52,16 @@ export function GameCard({ game, index, onPlay }: GameCardProps) {
       </div>
 
       {/* Title + Play CTA */}
-      <div className="flex flex-col flex-1 justify-between gap-3 px-1">
-        <h2 className="font-display text-xl font-bold text-[#2B3445] leading-snug line-clamp-1">
+      <div className="flex flex-col flex-1 justify-between gap-1 sm:gap-3 px-0 sm:px-1">
+        <h2 className="font-display text-[10px] sm:text-xl font-bold text-[#2B3445] leading-tight sm:leading-snug line-clamp-2 sm:line-clamp-1">
           {game.title}
         </h2>
 
         <span
-          className={`bubble-button w-full rounded-full py-2.5 px-5 font-bold text-sm inline-flex items-center justify-center gap-2 whitespace-nowrap ${theme.playBg}`}
+          className={`bubble-button w-full rounded-full py-1 sm:py-2.5 px-1 sm:px-5 font-bold text-[9px] sm:text-sm inline-flex items-center justify-center gap-2 whitespace-nowrap ${theme.playBg}`}
         >
-          <Play className="w-4 h-4 fill-current" aria-hidden="true" />
-          <span>Play Now</span>
+          <Play className="w-3 h-3 sm:w-4 sm:h-4 fill-current" aria-hidden="true" />
+          <span className="truncate">Play</span>
         </span>
       </div>
     </a>
