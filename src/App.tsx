@@ -621,7 +621,7 @@ export default function App() {
                     </button>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-4 gap-2 sm:gap-4 lg:gap-6">
+                  <div className="grid grid-cols-3 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 lg:gap-6">
                     {filteredGames.map((game, idx) => (
                       <GameCard
                         key={game.id}
@@ -695,7 +695,7 @@ export default function App() {
       </main>
 
       {/* Complete Professional Footer on Homepage & All 5 Information Pages */}
-      {activeView !== 'admin' && (
+      {activeView === 'home' && !activeGame && (
         <Footer
           activeView={activeView}
           onNavigate={(view) => navigateTo(view)}
