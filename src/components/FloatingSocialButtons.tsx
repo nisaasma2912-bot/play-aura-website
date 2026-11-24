@@ -47,7 +47,7 @@ export function FloatingSocialButtons({
           width={1080}
           height={1057}
           decoding="async"
-          className="block w-10 h-10 sm:w-12 sm:h-12 object-contain object-center shrink-0 select-none"
+          className="block h-10 w-auto sm:h-12 object-contain object-center shrink-0 select-none"
         />
         {hasUnreadNotifications && (
           <span
@@ -80,7 +80,7 @@ export function FloatingSocialButtons({
         rel="noopener noreferrer"
         aria-label="Visit Play Aura on YouTube"
         title="Visit Play Aura on YouTube"
-        className="inline-flex items-center justify-center rounded-xl w-12 h-12 sm:w-14 sm:h-14 hover:scale-105 active:scale-95 transition-transform duration-150 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[#8AC5F0]"
+        className="inline-flex items-center justify-center rounded-xl w-[52px] h-12 sm:w-[76px] sm:h-14 hover:scale-105 active:scale-95 transition-transform duration-150 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[#8AC5F0]"
       >
         <img
           src={YOUTUBE_CUSTOM_ICON_SRC}
