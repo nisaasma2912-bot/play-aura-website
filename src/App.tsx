@@ -503,7 +503,7 @@ export default function App() {
   }, [publishedGames, searchQuery]);
 
   return (
-    <div className="relative min-h-screen flex flex-col bg-[#FFFDF6] text-[#2B3445]">
+    <div className="relative min-h-screen flex flex-col bg-transparent text-[#2B3445]">
       {activeView !== 'admin' && (
         <div
           aria-hidden="true"
