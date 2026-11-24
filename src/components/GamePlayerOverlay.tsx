@@ -55,7 +55,12 @@ function injectBaseHref(html: string, baseDirUrl: string): string {
   return `<head>${headInjection}</head>\n${html}`;
 }
 
-export function GamePlayerOverlay({ game, recommendations, onPlayRecommendation, onClose }: GamePlayerOverlayProps) {
+export function GamePlayerOverlay({
+  game,
+  recommendations,
+  onPlayRecommendation,
+  onClose,
+}: GamePlayerOverlayProps) {
   const stageRef = useRef<HTMLDivElement>(null);
   const closedOnceRef = useRef(false);
   const [reloadKey, setReloadKey] = useState(0);
@@ -293,7 +298,7 @@ export function GamePlayerOverlay({ game, recommendations, onPlayRecommendation,
       </div>
 
       {/* Game viewport with compact recommendations on both sides */}
-      <div className="w-full max-w-[1600px] mx-auto grid grid-cols-[clamp(58px,8vw,112px)_minmax(0,1fr)_clamp(58px,8vw,112px)] gap-1.5 sm:gap-3 items-start">
+      <div className="w-full max-w-[1600px] mx-auto grid grid-cols-[clamp(52px,6vw,88px)_minmax(0,1fr)_clamp(52px,6vw,88px)] gap-1.5 sm:gap-2.5 items-start">
         <aside aria-label="Recommended games left" className="flex flex-col items-center gap-2 sm:gap-3 pt-1">
           {recommendationGames.map((item, index) => (
             <button key={'left-' + item.id} type="button" onClick={() => onPlayRecommendation(item)} title={item.title} aria-label={'Play ' + item.title} className="w-full min-w-0 rounded-lg sm:rounded-xl border border-[#CBE7FA] bg-white p-1 sm:p-1.5 flex flex-col items-center gap-1 hover:bg-[#EAF7FF] cursor-pointer">
