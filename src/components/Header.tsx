@@ -22,7 +22,7 @@ export function Header({
 }: HeaderProps) {
   return (
     <header className="sticky top-0 z-30 w-full bg-white/95 backdrop-blur-md border-b border-[#CBE7FA]/80">
-      <div className="max-w-7xl mx-auto w-full px-1 sm:px-8 min-h-[56px] sm:min-h-[88px] flex items-center justify-between gap-0.5 sm:gap-4">
+      <div className="max-w-7xl mx-auto w-full px-1 sm:px-8 min-h-[60px] sm:min-h-[88px] flex items-center justify-between gap-0.5 sm:gap-4">
         <button
           type="button"
           onClick={() => onNavigate('home')}
