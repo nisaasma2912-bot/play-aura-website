@@ -266,7 +266,7 @@ export function GamePlayerOverlay({
       <div className="w-full max-w-[1760px] mx-auto flex-1 min-h-0 grid grid-cols-[58px_minmax(0,1fr)_58px] sm:grid-cols-[82px_minmax(0,1fr)_82px] lg:grid-cols-[104px_minmax(0,1fr)_104px] gap-1.5 sm:gap-3 items-center">
         {!activeMax && (
           <aside aria-label="More games, left side" className="h-full min-h-0 overflow-y-auto overflow-x-hidden flex flex-col items-center gap-2 py-1">
-            {recommendedGames.filter((_, index) => index % 2 === 0).map((recommendedGame, index) => (
+            {recommendedGames.map((recommendedGame, index) => (
               <button key={recommendedGame.id} type="button" onClick={() => onPlayRecommendation(recommendedGame)} aria-label={'Play ' + recommendedGame.title} title={recommendedGame.title} className="group w-full shrink-0 flex flex-col items-center gap-1 rounded-lg border border-[#CBE7FA] bg-white/95 hover:bg-[#EAF7FF] p-1 sm:p-1.5 transition-colors cursor-pointer">
                 <div className="w-full aspect-[4/3] rounded-md overflow-hidden bg-[#FAF5E8]">
                   <GameThumbnail src={recommendedGame.thumbnailUrl} alt="" title={recommendedGame.title} compact loading={index < 3 ? 'eager' : 'lazy'} imgClassName="w-full h-full object-cover" />
@@ -307,7 +307,7 @@ export function GamePlayerOverlay({
 
         {!activeMax && (
           <aside aria-label="More games, right side" className="h-full min-h-0 overflow-y-auto overflow-x-hidden flex flex-col items-center gap-2 py-1">
-            {recommendedGames.filter((_, index) => index % 2 === 1).map((recommendedGame, index) => (
+            {recommendedGames.map((recommendedGame, index) => (
               <button key={recommendedGame.id} type="button" onClick={() => onPlayRecommendation(recommendedGame)} aria-label={'Play ' + recommendedGame.title} title={recommendedGame.title} className="group w-full shrink-0 flex flex-col items-center gap-1 rounded-lg border border-[#CBE7FA] bg-white/95 hover:bg-[#EAF7FF] p-1 sm:p-1.5 transition-colors cursor-pointer">
                 <div className="w-full aspect-[4/3] rounded-md overflow-hidden bg-[#FAF5E8]">
                   <GameThumbnail src={recommendedGame.thumbnailUrl} alt="" title={recommendedGame.title} compact loading={index < 3 ? 'eager' : 'lazy'} imgClassName="w-full h-full object-cover" />
