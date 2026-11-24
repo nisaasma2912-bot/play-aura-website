@@ -1,4 +1,3 @@
-
 import { playButtonClickSound } from '../lib/sound';
 
 export const NOTIFICATION_BELL_CUSTOM_ICON_SRC =
@@ -110,12 +109,6 @@ export function FloatingSocialButtons({
           height={1024}
           decoding="async"
           className={imageClass}
-        />
-      </a>
-    </div>
-  );
-}
-
         />
       </a>
     </div>
