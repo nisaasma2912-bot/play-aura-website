@@ -64,6 +64,7 @@ export function GamePlayerOverlay({
   const stageRef = useRef<HTMLDivElement>(null);
   const closedOnceRef = useRef(false);
   const [reloadKey, setReloadKey] = useState(0);
+  const [mobileGameStarted, setMobileGameStarted] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isExpandedFallback, setIsExpandedFallback] = useState(false);
 
@@ -76,6 +77,7 @@ export function GamePlayerOverlay({
 
   useEffect(() => {
     closedOnceRef.current = false;
+    setMobileGameStarted(false);
   }, [game.id]);
 
   const handleSafeClose = useCallback(() => {
@@ -175,6 +177,10 @@ export function GamePlayerOverlay({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
       if (document.fullscreenElement) return;
+      if (mobileGameStarted) {
+        setMobileGameStarted(false);
+        return;
+      }
       if (isExpandedFallback) {
         setIsExpandedFallback(false);
         return;
@@ -193,7 +199,7 @@ export function GamePlayerOverlay({
       window.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
     };
-  }, [handleSafeClose, isExpandedFallback]);
+  }, [handleSafeClose, isExpandedFallback, mobileGameStarted]);
 
   const toggleFullscreen = async () => {
     const el = stageRef.current;
@@ -241,7 +247,7 @@ export function GamePlayerOverlay({
   return (
     <section
       aria-label={`${game.title} game player`}
-      className="game-player-section w-full max-w-[1440px] mx-auto px-1 sm:px-4 lg:px-6 pt-2 sm:pt-5 pb-8 sm:pb-10"
+      className={`game-player-section w-full max-w-[1440px] mx-auto px-1 sm:px-4 lg:px-6 pt-2 sm:pt-5 pb-8 sm:pb-10 ${mobileGameStarted ? "mobile-game-started" : "mobile-game-preview"}`}
     >
       {/* Player Control Bar */}
       <div className="game-player-toolbar w-full sm:max-w-[min(100%,calc(82dvh*16/9))] mx-auto flex flex-nowrap items-center justify-between gap-1 landscape:gap-2 sm:gap-4 mb-2 sm:mb-4 bg-white/95 border-2 border-[#CBE7FA] rounded-2xl sm:rounded-full px-1.5 landscape:px-3 sm:px-5 py-1.5 sm:py-2 bubble-shadow">
@@ -310,6 +316,15 @@ export function GamePlayerOverlay({
           ))}
         </aside>
         <div className="min-w-0 w-full">
+        <div className="mobile-game-preview-card">
+          <div className="mobile-game-thumbnail">
+            <GameThumbnail src={game.thumbnailUrl} alt={game.title + " thumbnail"} title={game.title} imgClassName="w-full h-full object-cover" />
+            <button type="button" onClick={() => setMobileGameStarted(true)} aria-label={'Play ' + game.title} className="mobile-game-play-button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor" /></svg>
+            </button>
+          </div>
+          <h2 className="mobile-game-title">{game.title}</h2>
+        </div>
         <div
           ref={stageRef}
           className={
