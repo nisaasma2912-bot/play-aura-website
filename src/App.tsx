@@ -13,6 +13,14 @@ import { SearchBar } from './components/SearchBar';
 import { VisitorInboxModal } from './components/VisitorInboxModal';
 import { trackGameClose, trackGameOpen } from './lib/analytics';
 import {
+  COMPLETED_GAME_SESSIONS_PER_AD,
+  getCompletedGameSessions,
+  initializeH5GamesAds,
+  isH5GamesAdsEnabled,
+  recordCompletedGameSession,
+  showH5BrowseAd,
+} from './lib/h5GameAds';
+import {
   applyStoredConsentOnLoad,
   saveConsentChoice,
   type AnalyticsConsentChoice,
@@ -265,6 +273,11 @@ export default function App() {
     }
   }, []);
 
+  useEffect(() => {
+    // H5 Games Ads remain off unless an approved publisher explicitly enables them.
+    initializeH5GamesAds();
+  }, []);
+
   const handleAcceptAnalytics = useCallback(() => {
     saveConsentChoice('accepted');
     setConsentChoice('accepted');
@@ -277,13 +290,16 @@ export default function App() {
     setCookieBannerOpen(false);
   }, []);
 
-  const handleOpenGame = useCallback((game: GameRecord) => {
-    if (activeGameSessionRef.current?.id === game.id) {
-      return;
+  const finishActiveGameSession = useCallback(() => {
+    const closingGame = activeGameSessionRef.current;
+    activeGameSessionRef.current = null;
+    if (closingGame && !closingGame.id.startsWith('local-preview-')) {
+      trackGameClose(closingGame);
+      recordCompletedGameSession();
     }
-    if (activeGameSessionRef.current && !activeGameSessionRef.current.id.startsWith('local-preview-')) {
-      trackGameClose(activeGameSessionRef.current);
-    }
+  }, []);
+
+  const openGameImmediately = useCallback((game: GameRecord) => {
     activeGameSessionRef.current = game;
     if (!game.id.startsWith('local-preview-')) {
       trackGameOpen(game);
@@ -300,17 +316,39 @@ export default function App() {
     }
   }, []);
 
-  const handleCloseGame = useCallback(() => {
-    const closingGame = activeGameSessionRef.current;
-    activeGameSessionRef.current = null;
-    if (closingGame && !closingGame.id.startsWith('local-preview-')) {
-      trackGameClose(closingGame);
+  const handleOpenGame = useCallback((game: GameRecord, allowBrowseAd = true) => {
+    if (activeGameSessionRef.current?.id === game.id) {
+      return;
     }
+
+    // Switching games from the in-player recommendations closes the previous
+    // session, but does not interrupt that transition with an ad.
+    if (activeGameSessionRef.current) {
+      finishActiveGameSession();
+    }
+
+    const shouldOfferAd =
+      allowBrowseAd &&
+      !game.id.startsWith('local-preview-') &&
+      isH5GamesAdsEnabled() &&
+      getCompletedGameSessions() >= COMPLETED_GAME_SESSIONS_PER_AD;
+
+    // The ad is only requested on a user-initiated catalogue-to-game transition.
+    // Google calls adBreakDone whether an ad shows or no suitable ad is available.
+    if (shouldOfferAd && showH5BrowseAd(() => openGameImmediately(game))) {
+      return;
+    }
+
+    openGameImmediately(game);
+  }, [finishActiveGameSession, openGameImmediately]);
+
+  const handleCloseGame = useCallback(() => {
+    finishActiveGameSession();
     setActiveGame(null);
     if (typeof window !== 'undefined' && getGameSlugFromPathname(window.location.pathname)) {
       window.history.replaceState({}, '', '/');
     }
-  }, []);
+  }, [finishActiveGameSession]);
 
   const navigateTo = useCallback(
     (view: ActiveView, replace = false) => {
@@ -339,21 +377,20 @@ export default function App() {
       if (gameSlug) {
         const matchingGame = publishedGames.find((game) => game.slug === gameSlug);
         if (matchingGame) {
-          handleOpenGame(matchingGame);
+          // Browser history restores a route; it is not a fresh ad placement.
+          handleOpenGame(matchingGame, false);
           return;
         }
       }
       if (activeGameSessionRef.current) {
-        const closingGame = activeGameSessionRef.current;
-        activeGameSessionRef.current = null;
-        if (!closingGame.id.startsWith('local-preview-')) trackGameClose(closingGame);
+        finishActiveGameSession();
         setActiveGame(null);
       }
       setActiveView(getViewFromPathname(window.location.pathname));
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [handleOpenGame, publishedGames]);
+  }, [finishActiveGameSession, handleOpenGame, publishedGames]);
 
   useEffect(() => {
     const gameSlug = getGameSlugFromPathname(window.location.pathname);
@@ -540,7 +577,7 @@ export default function App() {
           <GamePlayerOverlay
             game={activeGame}
             recommendations={publishedGames}
-            onPlayRecommendation={handleOpenGame}
+            onPlayRecommendation={(game) => handleOpenGame(game, false)}
             onClose={handleCloseGame}
           />
         )}
@@ -687,7 +724,7 @@ export default function App() {
               onSessionChange={setAdminSession}
               onUnauthorizedRedirect={() => navigateTo('home', true)}
               onLibraryUpdated={() => void loadPublishedGames()}
-              onPlayGame={handleOpenGame}
+              onPlayGame={(game) => handleOpenGame(game, false)}
               onBackToGames={() => navigateTo('home')}
             />
           )}
