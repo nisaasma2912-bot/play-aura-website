@@ -655,7 +655,7 @@ export default function App() {
                     <div className="rounded-2xl bg-[#DDF0FC]/55 border border-[#CBE7FA] p-4 sm:p-5 space-y-2">
                       <h3 className="font-display text-lg font-bold text-[#1E5B8A]">Game Information</h3>
                       <p className="text-sm leading-relaxed text-[#5A657A]">
-                        Game descriptions, objectives, tips, and keyboard, mouse, or touch controls are shown when supplied for a listing. Some games are created by third-party developers; their names and creative work remain the property of their respective owners.
+                        Discover each game’s goal, helpful tips, and controls whenever those details are available. Pick a title, press Play, and enjoy your next adventure right here on Play Aura.
                       </p>
                     </div>
                   </div>
