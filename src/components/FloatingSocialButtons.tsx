@@ -7,7 +7,7 @@ export const SUGGESTION_CUSTOM_ICON_SRC =
   '/assets/aistudio/2f3821fe-f339-4ffd-84ea-fa1eedd5c8b0_54d97b59.png';
 
 export const YOUTUBE_CUSTOM_ICON_SRC =
-  '/assets/aistudio/play-aura-youtube-fixed.png';
+  '/assets/aistudio/play-aura-youtube-new.webp';
 
 export const YOUTUBE_CHANNEL_URL =
   'https://youtube.com/@playauras?si=ilsh6c_XOeMAOd4A';
@@ -100,7 +100,7 @@ export function FloatingSocialButtons({
         rel="noopener noreferrer"
         aria-label="Visit Play Aura on YouTube"
         title="Visit Play Aura on YouTube"
-        className={buttonClass + ' !w-[68px] !h-[68px] sm:!w-[104px] sm:!h-[104px] md:!w-[96px] md:!h-[96px] -translate-x-[2px]'}
+        className={buttonClass + ' !w-12 !h-12 sm:!w-16 sm:!h-16 -translate-x-[2px]'}
       >
         <img
           src={YOUTUBE_CUSTOM_ICON_SRC}
