@@ -559,7 +559,7 @@ export default function App() {
               {/* Published Games Grid / Friendly Empty State */}
               <section
                 aria-label="Published games"
-                className="w-full mx-auto px-2 sm:px-6 lg:px-8 pt-2 pb-12"
+                className="w-full mx-auto px-2 sm:px-6 lg:px-8 pt-2 pb-12 md:pb-6"
               >
                 {loadingGames ? (
                   <div className="max-w-md mx-auto rounded-[32px] bg-white/95 backdrop-blur-sm border-2 border-[#CBE7FA] p-10 text-center bubble-shadow space-y-3 my-6">
@@ -634,7 +634,7 @@ export default function App() {
                 )}
 
                 {/* Original, visitor-focused homepage information */}
-                <section aria-labelledby="play-aura-guide" className="mt-10 sm:mt-14 rounded-[28px] border-2 border-[#CBE7FA] bg-white/95 p-5 sm:p-8 bubble-shadow space-y-6">
+                <section aria-labelledby="play-aura-guide" className="mt-10 sm:mt-14 md:relative md:top-6 rounded-[28px] border-2 border-[#CBE7FA] bg-white/95 p-5 sm:p-8 bubble-shadow space-y-6">
                   <div className="max-w-3xl space-y-2">
                     <h2 id="play-aura-guide" className="font-display text-2xl sm:text-3xl font-bold text-[#2B3445]">
                       Free Browser Games on Play Aura
