@@ -134,6 +134,7 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeGame, setActiveGame] = useState<GameRecord | null>(null);
   const activeGameSessionRef = useRef<GameRecord | null>(null);
+  const pendingGameLaunchRef = useRef<string | null>(null);
 
   const [suggestionModalOpen, setSuggestionModalOpen] = useState(false);
   const [inboxModalOpen, setInboxModalOpen] = useState(false);
@@ -317,7 +318,7 @@ export default function App() {
   }, []);
 
   const handleOpenGame = useCallback((game: GameRecord, allowBrowseAd = true) => {
-    if (activeGameSessionRef.current?.id === game.id) {
+    if (activeGameSessionRef.current?.id === game.id || pendingGameLaunchRef.current) {
       return;
     }
 
@@ -335,8 +336,19 @@ export default function App() {
 
     // The ad is only requested on a user-initiated catalogue-to-game transition.
     // Google calls adBreakDone whether an ad shows or no suitable ad is available.
-    if (shouldOfferAd && showH5BrowseAd(() => openGameImmediately(game))) {
-      return;
+    if (shouldOfferAd) {
+      let adCompletedSynchronously = false;
+      const adWasQueued = showH5BrowseAd(() => {
+        adCompletedSynchronously = true;
+        pendingGameLaunchRef.current = null;
+        openGameImmediately(game);
+      });
+      if (adWasQueued) {
+        if (!adCompletedSynchronously) {
+          pendingGameLaunchRef.current = game.id;
+        }
+        return;
+      }
     }
 
     openGameImmediately(game);
