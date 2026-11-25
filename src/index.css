@@ -64,6 +64,11 @@
 
 
 
+/* Keep the mobile-only thumbnail preview hidden on desktop. */
+@media (min-width: 768px) {
+  .mobile-game-preview-card { display: none !important; }
+}
+
 /* Mobile: thumbnail-first preview and edge-to-edge gameplay after Play. */
 @media (max-width: 767px) {
   .game-player-section.mobile-game-preview { padding: 0 0 24px !important; margin: 0 !important; max-width: none !important; }
