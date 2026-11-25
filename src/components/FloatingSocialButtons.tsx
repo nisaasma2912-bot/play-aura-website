@@ -81,7 +81,7 @@ export function FloatingSocialButtons({
         onClick={handleSuggestionClick}
         aria-label="Suggest a game"
         title="Suggest a game"
-        className={buttonClass}
+        className={buttonClass + ' !w-12 !h-12 sm:!w-16 sm:!h-16'}
       >
         <img
           src={SUGGESTION_CUSTOM_ICON_SRC}
@@ -89,7 +89,7 @@ export function FloatingSocialButtons({
           width={1293}
           height={1217}
           decoding="async"
-          className="block w-9 h-9 sm:w-14 sm:h-14 object-contain object-center shrink-0 select-none"
+          className="block w-12 h-12 sm:w-16 sm:h-16 object-contain object-center shrink-0 select-none"
         />
       </button>
 
@@ -100,7 +100,7 @@ export function FloatingSocialButtons({
         rel="noopener noreferrer"
         aria-label="Visit Play Aura on YouTube"
         title="Visit Play Aura on YouTube"
-        className={buttonClass}
+        className={buttonClass + ' !w-[72px] !h-[72px] sm:!w-28 sm:!h-28'}
       >
         <img
           src={YOUTUBE_CUSTOM_ICON_SRC}
@@ -108,7 +108,7 @@ export function FloatingSocialButtons({
           width={1536}
           height={1024}
           decoding="async"
-          className="block w-9 h-9 sm:w-14 sm:h-14 object-contain object-center shrink-0 select-none"
+          className="block w-[72px] h-[72px] sm:w-28 sm:h-28 object-contain object-center shrink-0 select-none"
         />
       </a>
     </div>
