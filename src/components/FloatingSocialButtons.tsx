@@ -64,7 +64,7 @@ export function FloatingSocialButtons({
           width={1080}
           height={1057}
           decoding="async"
-          className="block w-9 h-9 sm:w-12 sm:h-12 object-contain object-center shrink-0 select-none"
+          className="block w-9.5 h-9.5 sm:w-[50px] sm:h-[50px] object-contain object-center shrink-0 select-none"
         />
 
         {hasUnreadNotifications && (
