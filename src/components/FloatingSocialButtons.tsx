@@ -100,7 +100,7 @@ export function FloatingSocialButtons({
         rel="noopener noreferrer"
         aria-label="Visit Play Aura on YouTube"
         title="Visit Play Aura on YouTube"
-        className={buttonClass + ' !w-[68px] !h-[68px] sm:!w-[104px] sm:!h-[104px] translate-x-[2px]'}
+        className={buttonClass + ' !w-[68px] !h-[68px] sm:!w-[104px] sm:!h-[104px] -translate-x-[2px]'}
       >
         <img
           src={YOUTUBE_CUSTOM_ICON_SRC}
