@@ -105,8 +105,8 @@ export function FloatingSocialButtons({
         <img
           src={YOUTUBE_CUSTOM_ICON_SRC}
           alt=""
-          width={1536}
-          height={1024}
+          width={256}
+          height={256}
           decoding="async"
           className="block w-12 h-12 sm:w-16 sm:h-16 object-contain object-center shrink-0 select-none"
         />
