@@ -62,6 +62,7 @@ export function GamePlayerOverlay({
   onClose,
 }: GamePlayerOverlayProps) {
   const stageRef = useRef<HTMLDivElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
   const closedOnceRef = useRef(false);
   const [reloadKey, setReloadKey] = useState(0);
   const [mobileGameStarted, setMobileGameStarted] = useState(false);
@@ -189,7 +190,11 @@ export function GamePlayerOverlay({
     };
 
     const handleFullscreenChange = () => {
-      setIsFullscreen(Boolean(document.fullscreenElement));
+      const fullscreenActive = Boolean(document.fullscreenElement);
+      setIsFullscreen(fullscreenActive);
+      if (!fullscreenActive && mobileGameStarted) {
+        setMobileGameStarted(false);
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -200,6 +205,16 @@ export function GamePlayerOverlay({
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
     };
   }, [handleSafeClose, isExpandedFallback, mobileGameStarted]);
+
+  const handleMobileGameStart = () => {
+    setMobileGameStarted(true);
+    const section = sectionRef.current;
+    if (section && !document.fullscreenElement && typeof section.requestFullscreen === 'function') {
+      void section.requestFullscreen().catch(() => {
+        // Keep the existing CSS immersive layout when browser fullscreen is unavailable.
+      });
+    }
+  };
 
   const toggleFullscreen = async () => {
     const el = stageRef.current;
@@ -246,6 +261,7 @@ export function GamePlayerOverlay({
 
   return (
     <section
+      ref={sectionRef}
       aria-label={`${game.title} game player`}
       className={`game-player-section w-full max-w-[1440px] mx-auto px-1 sm:px-4 lg:px-6 pt-2 sm:pt-5 pb-8 sm:pb-10 ${mobileGameStarted ? "mobile-game-started" : "mobile-game-preview"}`}
     >
@@ -319,7 +335,7 @@ export function GamePlayerOverlay({
         <div className="mobile-game-preview-card">
           <div className="mobile-game-thumbnail">
             <GameThumbnail src={game.thumbnailUrl} alt={game.title + " thumbnail"} title={game.title} imgClassName="w-full h-full object-cover" />
-            <button type="button" onClick={() => setMobileGameStarted(true)} aria-label={'Play ' + game.title} className="mobile-game-play-button">
+            <button type="button" onClick={handleMobileGameStart} aria-label={'Play ' + game.title} className="mobile-game-play-button">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor" /></svg>
             </button>
           </div>
