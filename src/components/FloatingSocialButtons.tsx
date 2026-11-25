@@ -7,7 +7,7 @@ export const SUGGESTION_CUSTOM_ICON_SRC =
   '/assets/aistudio/2f3821fe-f339-4ffd-84ea-fa1eedd5c8b0_54d97b59.png';
 
 export const YOUTUBE_CUSTOM_ICON_SRC =
-  '/assets/aistudio/play-aura-youtube-new.webp';
+  '/assets/aistudio/play-aura-youtube-fixed.png';
 
 export const YOUTUBE_CHANNEL_URL =
   'https://youtube.com/@playauras?si=ilsh6c_XOeMAOd4A';
