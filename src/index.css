@@ -68,10 +68,11 @@
 @media (max-width: 767px) {
   .game-player-section.mobile-game-preview { padding: 0 0 24px !important; margin: 0 !important; max-width: none !important; }
   .mobile-game-preview-card { display: block; width: 100%; margin: 0 auto 12px; padding: 0; }
-  .mobile-game-thumbnail { position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; background: transparent; }
-  .mobile-game-thumbnail img { display: block; width: 100%; height: 100%; object-fit: cover; }
-  .mobile-game-play-button { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; color: white; background: rgba(0,0,0,.16); cursor: pointer; }
-  .mobile-game-play-button svg { width: 68px; height: 68px; padding: 17px; border-radius: 9999px; background: rgba(24,110,74,.94); filter: drop-shadow(0 3px 10px rgba(0,0,0,.28)); }
+  .mobile-game-thumbnail { position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 18px; background: transparent; isolation: isolate; }
+  .mobile-game-thumbnail > div { width: 100%; height: 100%; overflow: hidden; border-radius: inherit; }
+  .mobile-game-thumbnail img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+  .mobile-game-play-button { position: absolute; z-index: 20; inset: 0; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; color: white; background: rgba(0,0,0,.16); cursor: pointer; touch-action: manipulation; }
+  .mobile-game-play-button svg { width: 72px; height: 72px; padding: 18px; border-radius: 9999px; background: rgba(24,110,74,.96); filter: drop-shadow(0 3px 10px rgba(0,0,0,.32)); pointer-events: none; }
   .mobile-game-title { margin: 10px 12px 0; color: #2B3445; font-size: 20px; font-weight: 800; }
   .game-player-toolbar { display: none !important; }
   .game-player-section.mobile-game-preview .game-player-layout { display: block !important; width: 100% !important; margin: 0 !important; padding: 0 !important; }
